@@ -8,6 +8,7 @@ This source file was part of OGRE
 For the latest info, see http://www.ogre3d.org/
 
 Copyright (c) 2000-2009 Torus Knot Software Ltd
+Re-arranged by Robin Southern 2010 http://github.com/betajaen/ogremath/
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +27,15 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+Some Code is is based on material from:
+
+Geometric Tools, LLC
+Copyright (c) 1998-2010
+Distributed under the Boost Software License, Version 1.0.
+http://www.boost.org/LICENSE_1_0.txt
+http://www.geometrictools.com/License/Boost/LICENSE_1_0.txt
+
 -----------------------------------------------------------------------------
 */
 
@@ -47,19 +57,19 @@ namespace OgreMath
 
  namespace Private
  {
-  template<int=0> class MathT;
-  template<int=0> class DegreeT;
-  template<int=0> class RadianT;
-  template<int=0> class Vector2T;
-  template<int=0> class Vector3T;
-  template<int=0> class Vector4T;
-  template<int=0> class QuaternionT;
-  template<int=0> class RayT;
-  template<int=0> class SphereT;
-  template<int=0> class PlaneT;
-  template<int=0> class AxisAlignedBoxT;
-  template<int=0> class Matrix3T;
-  template<int=0> class Matrix4T;
+  template<typename=void> class MathT;
+  template<typename=void> class DegreeT;
+  template<typename=void> class RadianT;
+  template<typename=void> class Vector2T;
+  template<typename=void> class Vector3T;
+  template<typename=void> class Vector4T;
+  template<typename=void> class QuaternionT;
+  template<typename=void> class RayT;
+  template<typename=void> class SphereT;
+  template<typename=void> class PlaneT;
+  template<typename=void> class AxisAlignedBoxT;
+  template<typename=void> class Matrix3T;
+  template<typename=void> class Matrix4T;
  };
 
  template <typename T> struct vector 
@@ -85,7 +95,7 @@ namespace OgreMath
   <br>This is based on MgcMath.h from
   <a href="http://www.geometrictools.com/">Wild Magic</a>.
   */
-  template<int o_O> class MathT
+  template<typename o_O> class MathT
   {
   public:
 
@@ -94,7 +104,7 @@ namespace OgreMath
    typedef Private::RadianT<o_O>          Radian;
    typedef Private::Vector2T<o_O>         Vector2;
    typedef Private::Vector3T<o_O>         Vector3;
-   typedef Private::Vector3T<o_O>         Vector4;
+   typedef Private::Vector4T<o_O>         Vector4;
    typedef Private::QuaternionT<o_O>      Quaternion;
    typedef Private::RayT<o_O>             Ray;
    typedef Private::SphereT<o_O>          Sphere;
@@ -1307,13 +1317,2448 @@ namespace OgreMath
    static const Real fDeg2Rad;
    static const Real fRad2Deg;
 
+  }; // class Math
+
+
+
+
+
+
+
+
+
+  // -------------------------------------------------------------------------------
+
+
+
+
+
+  /** \addtogroup Core
+  *  @{
+  */
+  /** \addtogroup Math
+  *  @{
+  */
+  /** Standard 2-dimensional vector.
+  @remarks
+  A direction in 2D space represented as distances along the 2
+  orthogonal axes (x, y). Note that positions, directions and
+  scaling factors can be represented by a vector, depending on how
+  you interpret the values.
+  */
+  template<typename o_O> class Vector2T
+  {
+
+  public:
+
+   Real x, y;
+
+   typedef Private::MathT<o_O>            Math;
+   typedef Private::DegreeT<o_O>          Degree;
+   typedef Private::RadianT<o_O>          Radian;
+   typedef Private::Vector2T<o_O>         Vector2;
+   typedef Private::Vector3T<o_O>         Vector3;
+   typedef Private::Vector4T<o_O>         Vector4;
+   typedef Private::QuaternionT<o_O>      Quaternion;
+   typedef Private::RayT<o_O>             Ray;
+   typedef Private::SphereT<o_O>          Sphere;
+   typedef Private::PlaneT<o_O>           Plane;
+   typedef Private::AxisAlignedBoxT<o_O>  AxisAlignedBox;
+   typedef Private::Matrix3T<o_O>         Matrix3;
+   typedef Private::Matrix4T<o_O>         Matrix4;
+
+   inline Vector2()
+   {
+   }
+
+   inline Vector2(const Real fX, const Real fY )
+    : x( fX ), y( fY )
+   {
+   }
+
+   inline explicit Vector2( const Real scaler )
+    : x( scaler), y( scaler )
+   {
+   }
+
+   inline explicit Vector2( const Real afCoordinate[2] )
+    : x( afCoordinate[0] ),
+    y( afCoordinate[1] )
+   {
+   }
+
+   inline explicit Vector2( const int afCoordinate[2] )
+   {
+    x = (Real)afCoordinate[0];
+    y = (Real)afCoordinate[1];
+   }
+
+   inline explicit Vector2( Real* const r )
+    : x( r[0] ), y( r[1] )
+   {
+   }
+
+   /** Exchange the contents of this vector with another. 
+   */
+   inline void swap(Vector2& other)
+   {
+    std::swap(x, other.x);
+    std::swap(y, other.y);
+   }
+
+   inline Real operator [] ( const size_t i ) const
+   {
+    assert( i < 2 );
+
+    return *(&x+i);
+   }
+
+   inline Real& operator [] ( const size_t i )
+   {
+    assert( i < 2 );
+
+    return *(&x+i);
+   }
+
+   /// Pointer accessor for direct copying
+   inline Real* ptr()
+   {
+    return &x;
+   }
+   /// Pointer accessor for direct copying
+   inline const Real* ptr() const
+   {
+    return &x;
+   }
+
+   /** Assigns the value of the other vector.
+   @param
+   rkVector The other vector
+   */
+   inline Vector2& operator = ( const Vector2& rkVector )
+   {
+    x = rkVector.x;
+    y = rkVector.y;
+
+    return *this;
+   }
+
+   inline Vector2& operator = ( const Real fScalar)
+   {
+    x = fScalar;
+    y = fScalar;
+
+    return *this;
+   }
+
+   inline bool operator == ( const Vector2& rkVector ) const
+   {
+    return ( x == rkVector.x && y == rkVector.y );
+   }
+
+   inline bool operator != ( const Vector2& rkVector ) const
+   {
+    return ( x != rkVector.x || y != rkVector.y  );
+   }
+
+   // arithmetic operations
+   inline Vector2 operator + ( const Vector2& rkVector ) const
+   {
+    return Vector2(
+     x + rkVector.x,
+     y + rkVector.y);
+   }
+
+   inline Vector2 operator - ( const Vector2& rkVector ) const
+   {
+    return Vector2(
+     x - rkVector.x,
+     y - rkVector.y);
+   }
+
+   inline Vector2 operator * ( const Real fScalar ) const
+   {
+    return Vector2(
+     x * fScalar,
+     y * fScalar);
+   }
+
+   inline Vector2 operator * ( const Vector2& rhs) const
+   {
+    return Vector2(
+     x * rhs.x,
+     y * rhs.y);
+   }
+
+   inline Vector2 operator / ( const Real fScalar ) const
+   {
+    assert( fScalar != 0.0 );
+
+    Real fInv = 1.0f / fScalar;
+
+    return Vector2(
+     x * fInv,
+     y * fInv);
+   }
+
+   inline Vector2 operator / ( const Vector2& rhs) const
+   {
+    return Vector2(
+     x / rhs.x,
+     y / rhs.y);
+   }
+
+   inline const Vector2& operator + () const
+   {
+    return *this;
+   }
+
+   inline Vector2 operator - () const
+   {
+    return Vector2(-x, -y);
+   }
+
+   // overloaded operators to help Vector2
+   inline friend Vector2 operator * ( const Real fScalar, const Vector2& rkVector )
+   {
+    return Vector2(
+     fScalar * rkVector.x,
+     fScalar * rkVector.y);
+   }
+
+   inline friend Vector2 operator / ( const Real fScalar, const Vector2& rkVector )
+   {
+    return Vector2(
+     fScalar / rkVector.x,
+     fScalar / rkVector.y);
+   }
+
+   inline friend Vector2 operator + (const Vector2& lhs, const Real rhs)
+   {
+    return Vector2(
+     lhs.x + rhs,
+     lhs.y + rhs);
+   }
+
+   inline friend Vector2 operator + (const Real lhs, const Vector2& rhs)
+   {
+    return Vector2(
+     lhs + rhs.x,
+     lhs + rhs.y);
+   }
+
+   inline friend Vector2 operator - (const Vector2& lhs, const Real rhs)
+   {
+    return Vector2(
+     lhs.x - rhs,
+     lhs.y - rhs);
+   }
+
+   inline friend Vector2 operator - (const Real lhs, const Vector2& rhs)
+   {
+    return Vector2(
+     lhs - rhs.x,
+     lhs - rhs.y);
+   }
+   // arithmetic updates
+   inline Vector2& operator += ( const Vector2& rkVector )
+   {
+    x += rkVector.x;
+    y += rkVector.y;
+
+    return *this;
+   }
+
+   inline Vector2& operator += ( const Real fScaler )
+   {
+    x += fScaler;
+    y += fScaler;
+
+    return *this;
+   }
+
+   inline Vector2& operator -= ( const Vector2& rkVector )
+   {
+    x -= rkVector.x;
+    y -= rkVector.y;
+
+    return *this;
+   }
+
+   inline Vector2& operator -= ( const Real fScaler )
+   {
+    x -= fScaler;
+    y -= fScaler;
+
+    return *this;
+   }
+
+   inline Vector2& operator *= ( const Real fScalar )
+   {
+    x *= fScalar;
+    y *= fScalar;
+
+    return *this;
+   }
+
+   inline Vector2& operator *= ( const Vector2& rkVector )
+   {
+    x *= rkVector.x;
+    y *= rkVector.y;
+
+    return *this;
+   }
+
+   inline Vector2& operator /= ( const Real fScalar )
+   {
+    assert( fScalar != 0.0 );
+
+    Real fInv = 1.0f / fScalar;
+
+    x *= fInv;
+    y *= fInv;
+
+    return *this;
+   }
+
+   inline Vector2& operator /= ( const Vector2& rkVector )
+   {
+    x /= rkVector.x;
+    y /= rkVector.y;
+
+    return *this;
+   }
+
+   /** Returns the length (magnitude) of the vector.
+   @warning
+   This operation requires a square root and is expensive in
+   terms of CPU operations. If you don't need to know the exact
+   length (e.g. for just comparing lengths) use squaredLength()
+   instead.
+   */
+   inline Real length () const
+   {
+    return Math::Sqrt( x * x + y * y );
+   }
+
+   /** Returns the square of the length(magnitude) of the vector.
+   @remarks
+   This  method is for efficiency - calculating the actual
+   length of a vector requires a square root, which is expensive
+   in terms of the operations required. This method returns the
+   square of the length of the vector, i.e. the same as the
+   length but before the square root is taken. Use this if you
+   want to find the longest / shortest vector without incurring
+   the square root.
+   */
+   inline Real squaredLength () const
+   {
+    return x * x + y * y;
+   }
+   /** Returns the distance to another vector.
+   @warning
+   This operation requires a square root and is expensive in
+   terms of CPU operations. If you don't need to know the exact
+   distance (e.g. for just comparing distances) use squaredDistance()
+   instead.
+   */
+   inline Real distance(const Vector2& rhs) const
+   {
+    return (*this - rhs).length();
+   }
+
+   /** Returns the square of the distance to another vector.
+   @remarks
+   This method is for efficiency - calculating the actual
+   distance to another vector requires a square root, which is
+   expensive in terms of the operations required. This method
+   returns the square of the distance to another vector, i.e.
+   the same as the distance but before the square root is taken.
+   Use this if you want to find the longest / shortest distance
+   without incurring the square root.
+   */
+   inline Real squaredDistance(const Vector2& rhs) const
+   {
+    return (*this - rhs).squaredLength();
+   }
+
+   /** Calculates the dot (scalar) product of this vector with another.
+   @remarks
+   The dot product can be used to calculate the angle between 2
+   vectors. If both are unit vectors, the dot product is the
+   cosine of the angle; otherwise the dot product must be
+   divided by the product of the lengths of both vectors to get
+   the cosine of the angle. This result can further be used to
+   calculate the distance of a point from a plane.
+   @param
+   vec Vector with which to calculate the dot product (together
+   with this one).
+   @returns
+   A float representing the dot product value.
+   */
+   inline Real dotProduct(const Vector2& vec) const
+   {
+    return x * vec.x + y * vec.y;
+   }
+
+   /** Normalises the vector.
+   @remarks
+   This method normalises the vector such that it's
+   length / magnitude is 1. The result is called a unit vector.
+   @note
+   This function will not crash for zero-sized vectors, but there
+   will be no changes made to their components.
+   @returns The previous length of the vector.
+   */
+   inline Real normalise()
+   {
+    Real fLength = Math::Sqrt( x * x + y * y);
+
+    // Will also work for zero-sized vectors, but will change nothing
+    if ( fLength > 1e-08 )
+    {
+     Real fInvLength = 1.0f / fLength;
+     x *= fInvLength;
+     y *= fInvLength;
+    }
+
+    return fLength;
+   }
+
+
+
+   /** Returns a vector at a point half way between this and the passed
+   in vector.
+   */
+   inline Vector2 midPoint( const Vector2& vec ) const
+   {
+    return Vector2(
+     ( x + vec.x ) * 0.5f,
+     ( y + vec.y ) * 0.5f );
+   }
+
+   /** Returns true if the vector's scalar components are all greater
+   that the ones of the vector it is compared against.
+   */
+   inline bool operator < ( const Vector2& rhs ) const
+   {
+    if( x < rhs.x && y < rhs.y )
+     return true;
+    return false;
+   }
+
+   /** Returns true if the vector's scalar components are all smaller
+   that the ones of the vector it is compared against.
+   */
+   inline bool operator > ( const Vector2& rhs ) const
+   {
+    if( x > rhs.x && y > rhs.y )
+     return true;
+    return false;
+   }
+
+   /** Sets this vector's components to the minimum of its own and the
+   ones of the passed in vector.
+   @remarks
+   'Minimum' in this case means the combination of the lowest
+   value of x, y and z from both vectors. Lowest is taken just
+   numerically, not magnitude, so -1 < 0.
+   */
+   inline void makeFloor( const Vector2& cmp )
+   {
+    if( cmp.x < x ) x = cmp.x;
+    if( cmp.y < y ) y = cmp.y;
+   }
+
+   /** Sets this vector's components to the maximum of its own and the
+   ones of the passed in vector.
+   @remarks
+   'Maximum' in this case means the combination of the highest
+   value of x, y and z from both vectors. Highest is taken just
+   numerically, not magnitude, so 1 > -3.
+   */
+   inline void makeCeil( const Vector2& cmp )
+   {
+    if( cmp.x > x ) x = cmp.x;
+    if( cmp.y > y ) y = cmp.y;
+   }
+
+   /** Generates a vector perpendicular to this vector (eg an 'up' vector).
+   @remarks
+   This method will return a vector which is perpendicular to this
+   vector. There are an infinite number of possibilities but this
+   method will guarantee to generate one of them. If you need more
+   control you should use the Quaternion class.
+   */
+   inline Vector2 perpendicular(void) const
+   {
+    return Vector2 (-y, x);
+   }
+   /** Calculates the 2 dimensional cross-product of 2 vectors, which results
+   in a single floating point value which is 2 times the area of the triangle.
+   */
+   inline Real crossProduct( const Vector2& rkVector ) const
+   {
+    return x * rkVector.y - y * rkVector.x;
+   }
+   /** Generates a new random vector which deviates from this vector by a
+   given angle in a random direction.
+   @remarks
+   This method assumes that the random number generator has already
+   been seeded appropriately.
+   @param
+   angle The angle at which to deviate in radians
+   @param
+   up Any vector perpendicular to this one (which could generated
+   by cross-product of this vector and any other non-colinear
+   vector). If you choose not to provide this the function will
+   derive one on it's own, however if you provide one yourself the
+   function will be faster (this allows you to reuse up vectors if
+   you call this method more than once)
+   @returns
+   A random vector which deviates from this vector by angle. This
+   vector will not be normalised, normalise it if you wish
+   afterwards.
+   */
+   inline Vector2 randomDeviant(
+    Real angle) const
+   {
+
+    angle *=  Math::UnitRandom() * Math::TWO_PI;
+    Real cosa = cos(angle);
+    Real sina = sin(angle);
+    return  Vector2(cosa * x - sina * y,
+     sina * x + cosa * y);
+   }
+
+   /** Returns true if this vector is zero length. */
+   inline bool isZeroLength(void) const
+   {
+    Real sqlen = (x * x) + (y * y);
+    return (sqlen < (1e-06 * 1e-06));
+
+   }
+
+   /** As normalise, except that this vector is unaffected and the
+   normalised vector is returned as a copy. */
+   inline Vector2 normalisedCopy(void) const
+   {
+    Vector2 ret = *this;
+    ret.normalise();
+    return ret;
+   }
+
+   /** Calculates a reflection vector to the plane with the given normal .
+   @remarks NB assumes 'this' is pointing AWAY FROM the plane, invert if it is not.
+   */
+   inline Vector2 reflect(const Vector2& normal) const
+   {
+    return Vector2( *this - ( 2 * this->dotProduct(normal) * normal ) );
+   }
+   /// Check whether this vector contains valid values
+   inline bool isNaN() const
+   {
+    return Math::isNaN(x) || Math::isNaN(y);
+   }
+
+   // special points
+   static const Vector2 ZERO;
+   static const Vector2 UNIT_X;
+   static const Vector2 UNIT_Y;
+   static const Vector2 NEGATIVE_UNIT_X;
+   static const Vector2 NEGATIVE_UNIT_Y;
+   static const Vector2 UNIT_SCALE;
+
+   /** Function for writing to a stream.
+   */
+   inline friend std::ostream& operator <<
+    ( std::ostream& o, const Vector2& v )
+   {
+    o << "Vector2(" << v.x << ", " << v.y <<  ")";
+    return o;
+   }
+
+  }; // class Vector2
+  /** @} */
+  /** @} */
+
+
+
+
+  // --------------------------------------------------------------------------------
+
+
+  /** \addtogroup Core
+  *  @{
+  */
+  /** \addtogroup Math
+  *  @{
+  */
+  /** Standard 3-dimensional vector.
+  @remarks
+  A direction in 3D space represented as distances along the 3
+  orthogonal axes (x, y, z). Note that positions, directions and
+  scaling factors can be represented by a vector, depending on how
+  you interpret the values.
+  */
+  template<typename o_O> class Vector3T
+  {
+  public:
+   Real x, y, z;
+
+   typedef Private::MathT<o_O>            Math;
+   typedef Private::DegreeT<o_O>          Degree;
+   typedef Private::RadianT<o_O>          Radian;
+   typedef Private::Vector2T<o_O>         Vector2;
+   typedef Private::Vector3T<o_O>         Vector3;
+   typedef Private::Vector4T<o_O>         Vector4;
+   typedef Private::QuaternionT<o_O>      Quaternion;
+   typedef Private::RayT<o_O>             Ray;
+   typedef Private::SphereT<o_O>          Sphere;
+   typedef Private::PlaneT<o_O>           Plane;
+   typedef Private::AxisAlignedBoxT<o_O>  AxisAlignedBox;
+   typedef Private::Matrix3T<o_O>         Matrix3;
+   typedef Private::Matrix4T<o_O>         Matrix4;
+
+   inline Vector3()
+   {
+   }
+
+   inline Vector3( const Real fX, const Real fY, const Real fZ )
+    : x( fX ), y( fY ), z( fZ )
+   {
+   }
+
+   inline explicit Vector3( const Real afCoordinate[3] )
+    : x( afCoordinate[0] ),
+    y( afCoordinate[1] ),
+    z( afCoordinate[2] )
+   {
+   }
+
+   inline explicit Vector3( const int afCoordinate[3] )
+   {
+    x = (Real)afCoordinate[0];
+    y = (Real)afCoordinate[1];
+    z = (Real)afCoordinate[2];
+   }
+
+   inline explicit Vector3( Real* const r )
+    : x( r[0] ), y( r[1] ), z( r[2] )
+   {
+   }
+
+   inline explicit Vector3( const Real scaler )
+    : x( scaler )
+    , y( scaler )
+    , z( scaler )
+   {
+   }
+
+
+   /** Exchange the contents of this vector with another. 
+   */
+   inline void swap(Vector3& other)
+   {
+    std::swap(x, other.x);
+    std::swap(y, other.y);
+    std::swap(z, other.z);
+   }
+
+   inline Real operator [] ( const size_t i ) const
+   {
+    assert( i < 3 );
+
+    return *(&x+i);
+   }
+
+   inline Real& operator [] ( const size_t i )
+   {
+    assert( i < 3 );
+
+    return *(&x+i);
+   }
+   /// Pointer accessor for direct copying
+   inline Real* ptr()
+   {
+    return &x;
+   }
+   /// Pointer accessor for direct copying
+   inline const Real* ptr() const
+   {
+    return &x;
+   }
+
+   /** Assigns the value of the other vector.
+   @param
+   rkVector The other vector
+   */
+   inline Vector3& operator = ( const Vector3& rkVector )
+   {
+    x = rkVector.x;
+    y = rkVector.y;
+    z = rkVector.z;
+
+    return *this;
+   }
+
+   inline Vector3& operator = ( const Real fScaler )
+   {
+    x = fScaler;
+    y = fScaler;
+    z = fScaler;
+
+    return *this;
+   }
+
+   inline bool operator == ( const Vector3& rkVector ) const
+   {
+    return ( x == rkVector.x && y == rkVector.y && z == rkVector.z );
+   }
+
+   inline bool operator != ( const Vector3& rkVector ) const
+   {
+    return ( x != rkVector.x || y != rkVector.y || z != rkVector.z );
+   }
+
+   // arithmetic operations
+   inline Vector3 operator + ( const Vector3& rkVector ) const
+   {
+    return Vector3(
+     x + rkVector.x,
+     y + rkVector.y,
+     z + rkVector.z);
+   }
+
+   inline Vector3 operator - ( const Vector3& rkVector ) const
+   {
+    return Vector3(
+     x - rkVector.x,
+     y - rkVector.y,
+     z - rkVector.z);
+   }
+
+   inline Vector3 operator * ( const Real fScalar ) const
+   {
+    return Vector3(
+     x * fScalar,
+     y * fScalar,
+     z * fScalar);
+   }
+
+   inline Vector3 operator * ( const Vector3& rhs) const
+   {
+    return Vector3(
+     x * rhs.x,
+     y * rhs.y,
+     z * rhs.z);
+   }
+
+   inline Vector3 operator / ( const Real fScalar ) const
+   {
+    assert( fScalar != 0.0 );
+
+    Real fInv = 1.0f / fScalar;
+
+    return Vector3(
+     x * fInv,
+     y * fInv,
+     z * fInv);
+   }
+
+   inline Vector3 operator / ( const Vector3& rhs) const
+   {
+    return Vector3(
+     x / rhs.x,
+     y / rhs.y,
+     z / rhs.z);
+   }
+
+   inline const Vector3& operator + () const
+   {
+    return *this;
+   }
+
+   inline Vector3 operator - () const
+   {
+    return Vector3(-x, -y, -z);
+   }
+
+   // overloaded operators to help Vector3
+   inline friend Vector3 operator * ( const Real fScalar, const Vector3& rkVector )
+   {
+    return Vector3(
+     fScalar * rkVector.x,
+     fScalar * rkVector.y,
+     fScalar * rkVector.z);
+   }
+
+   inline friend Vector3 operator / ( const Real fScalar, const Vector3& rkVector )
+   {
+    return Vector3(
+     fScalar / rkVector.x,
+     fScalar / rkVector.y,
+     fScalar / rkVector.z);
+   }
+
+   inline friend Vector3 operator + (const Vector3& lhs, const Real rhs)
+   {
+    return Vector3(
+     lhs.x + rhs,
+     lhs.y + rhs,
+     lhs.z + rhs);
+   }
+
+   inline friend Vector3 operator + (const Real lhs, const Vector3& rhs)
+   {
+    return Vector3(
+     lhs + rhs.x,
+     lhs + rhs.y,
+     lhs + rhs.z);
+   }
+
+   inline friend Vector3 operator - (const Vector3& lhs, const Real rhs)
+   {
+    return Vector3(
+     lhs.x - rhs,
+     lhs.y - rhs,
+     lhs.z - rhs);
+   }
+
+   inline friend Vector3 operator - (const Real lhs, const Vector3& rhs)
+   {
+    return Vector3(
+     lhs - rhs.x,
+     lhs - rhs.y,
+     lhs - rhs.z);
+   }
+
+   // arithmetic updates
+   inline Vector3& operator += ( const Vector3& rkVector )
+   {
+    x += rkVector.x;
+    y += rkVector.y;
+    z += rkVector.z;
+
+    return *this;
+   }
+
+   inline Vector3& operator += ( const Real fScalar )
+   {
+    x += fScalar;
+    y += fScalar;
+    z += fScalar;
+    return *this;
+   }
+
+   inline Vector3& operator -= ( const Vector3& rkVector )
+   {
+    x -= rkVector.x;
+    y -= rkVector.y;
+    z -= rkVector.z;
+
+    return *this;
+   }
+
+   inline Vector3& operator -= ( const Real fScalar )
+   {
+    x -= fScalar;
+    y -= fScalar;
+    z -= fScalar;
+    return *this;
+   }
+
+   inline Vector3& operator *= ( const Real fScalar )
+   {
+    x *= fScalar;
+    y *= fScalar;
+    z *= fScalar;
+    return *this;
+   }
+
+   inline Vector3& operator *= ( const Vector3& rkVector )
+   {
+    x *= rkVector.x;
+    y *= rkVector.y;
+    z *= rkVector.z;
+
+    return *this;
+   }
+
+   inline Vector3& operator /= ( const Real fScalar )
+   {
+    assert( fScalar != 0.0 );
+
+    Real fInv = 1.0f / fScalar;
+
+    x *= fInv;
+    y *= fInv;
+    z *= fInv;
+
+    return *this;
+   }
+
+   inline Vector3& operator /= ( const Vector3& rkVector )
+   {
+    x /= rkVector.x;
+    y /= rkVector.y;
+    z /= rkVector.z;
+
+    return *this;
+   }
+
+
+   /** Returns the length (magnitude) of the vector.
+   @warning
+   This operation requires a square root and is expensive in
+   terms of CPU operations. If you don't need to know the exact
+   length (e.g. for just comparing lengths) use squaredLength()
+   instead.
+   */
+   inline Real length () const
+   {
+    return Math::Sqrt( x * x + y * y + z * z );
+   }
+
+   /** Returns the square of the length(magnitude) of the vector.
+   @remarks
+   This  method is for efficiency - calculating the actual
+   length of a vector requires a square root, which is expensive
+   in terms of the operations required. This method returns the
+   square of the length of the vector, i.e. the same as the
+   length but before the square root is taken. Use this if you
+   want to find the longest / shortest vector without incurring
+   the square root.
+   */
+   inline Real squaredLength () const
+   {
+    return x * x + y * y + z * z;
+   }
+
+   /** Returns the distance to another vector.
+   @warning
+   This operation requires a square root and is expensive in
+   terms of CPU operations. If you don't need to know the exact
+   distance (e.g. for just comparing distances) use squaredDistance()
+   instead.
+   */
+   inline Real distance(const Vector3& rhs) const
+   {
+    return (*this - rhs).length();
+   }
+
+   /** Returns the square of the distance to another vector.
+   @remarks
+   This method is for efficiency - calculating the actual
+   distance to another vector requires a square root, which is
+   expensive in terms of the operations required. This method
+   returns the square of the distance to another vector, i.e.
+   the same as the distance but before the square root is taken.
+   Use this if you want to find the longest / shortest distance
+   without incurring the square root.
+   */
+   inline Real squaredDistance(const Vector3& rhs) const
+   {
+    return (*this - rhs).squaredLength();
+   }
+
+   /** Calculates the dot (scalar) product of this vector with another.
+   @remarks
+   The dot product can be used to calculate the angle between 2
+   vectors. If both are unit vectors, the dot product is the
+   cosine of the angle; otherwise the dot product must be
+   divided by the product of the lengths of both vectors to get
+   the cosine of the angle. This result can further be used to
+   calculate the distance of a point from a plane.
+   @param
+   vec Vector with which to calculate the dot product (together
+   with this one).
+   @returns
+   A float representing the dot product value.
+   */
+   inline Real dotProduct(const Vector3& vec) const
+   {
+    return x * vec.x + y * vec.y + z * vec.z;
+   }
+
+   /** Calculates the absolute dot (scalar) product of this vector with another.
+   @remarks
+   This function work similar dotProduct, except it use absolute value
+   of each component of the vector to computing.
+   @param
+   vec Vector with which to calculate the absolute dot product (together
+   with this one).
+   @returns
+   A Real representing the absolute dot product value.
+   */
+   inline Real absDotProduct(const Vector3& vec) const
+   {
+    return Math::Abs(x * vec.x) + Math::Abs(y * vec.y) + Math::Abs(z * vec.z);
+   }
+
+   /** Normalises the vector.
+   @remarks
+   This method normalises the vector such that it's
+   length / magnitude is 1. The result is called a unit vector.
+   @note
+   This function will not crash for zero-sized vectors, but there
+   will be no changes made to their components.
+   @returns The previous length of the vector.
+   */
+   inline Real normalise()
+   {
+    Real fLength = Math::Sqrt( x * x + y * y + z * z );
+
+    // Will also work for zero-sized vectors, but will change nothing
+    if ( fLength > 1e-08 )
+    {
+     Real fInvLength = 1.0f / fLength;
+     x *= fInvLength;
+     y *= fInvLength;
+     z *= fInvLength;
+    }
+
+    return fLength;
+   }
+
+   /** Calculates the cross-product of 2 vectors, i.e. the vector that
+   lies perpendicular to them both.
+   @remarks
+   The cross-product is normally used to calculate the normal
+   vector of a plane, by calculating the cross-product of 2
+   non-equivalent vectors which lie on the plane (e.g. 2 edges
+   of a triangle).
+   @param
+   vec Vector which, together with this one, will be used to
+   calculate the cross-product.
+   @returns
+   A vector which is the result of the cross-product. This
+   vector will <b>NOT</b> be normalised, to maximise efficiency
+   - call Vector3::normalise on the result if you wish this to
+   be done. As for which side the resultant vector will be on, the
+   returned vector will be on the side from which the arc from 'this'
+   to rkVector is anticlockwise, e.g. UNIT_Y.crossProduct(UNIT_Z)
+   = UNIT_X, whilst UNIT_Z.crossProduct(UNIT_Y) = -UNIT_X.
+   This is because OGRE uses a right-handed coordinate system.
+   @par
+   For a clearer explanation, look a the left and the bottom edges
+   of your monitor's screen. Assume that the first vector is the
+   left edge and the second vector is the bottom edge, both of
+   them starting from the lower-left corner of the screen. The
+   resulting vector is going to be perpendicular to both of them
+   and will go <i>inside</i> the screen, towards the cathode tube
+   (assuming you're using a CRT monitor, of course).
+   */
+   inline Vector3 crossProduct( const Vector3& rkVector ) const
+   {
+    return Vector3(
+     y * rkVector.z - z * rkVector.y,
+     z * rkVector.x - x * rkVector.z,
+     x * rkVector.y - y * rkVector.x);
+   }
+
+   /** Returns a vector at a point half way between this and the passed
+   in vector.
+   */
+   inline Vector3 midPoint( const Vector3& vec ) const
+   {
+    return Vector3(
+     ( x + vec.x ) * 0.5f,
+     ( y + vec.y ) * 0.5f,
+     ( z + vec.z ) * 0.5f );
+   }
+
+   /** Returns true if the vector's scalar components are all greater
+   that the ones of the vector it is compared against.
+   */
+   inline bool operator < ( const Vector3& rhs ) const
+   {
+    if( x < rhs.x && y < rhs.y && z < rhs.z )
+     return true;
+    return false;
+   }
+
+   /** Returns true if the vector's scalar components are all smaller
+   that the ones of the vector it is compared against.
+   */
+   inline bool operator > ( const Vector3& rhs ) const
+   {
+    if( x > rhs.x && y > rhs.y && z > rhs.z )
+     return true;
+    return false;
+   }
+
+   /** Sets this vector's components to the minimum of its own and the
+   ones of the passed in vector.
+   @remarks
+   'Minimum' in this case means the combination of the lowest
+   value of x, y and z from both vectors. Lowest is taken just
+   numerically, not magnitude, so -1 < 0.
+   */
+   inline void makeFloor( const Vector3& cmp )
+   {
+    if( cmp.x < x ) x = cmp.x;
+    if( cmp.y < y ) y = cmp.y;
+    if( cmp.z < z ) z = cmp.z;
+   }
+
+   /** Sets this vector's components to the maximum of its own and the
+   ones of the passed in vector.
+   @remarks
+   'Maximum' in this case means the combination of the highest
+   value of x, y and z from both vectors. Highest is taken just
+   numerically, not magnitude, so 1 > -3.
+   */
+   inline void makeCeil( const Vector3& cmp )
+   {
+    if( cmp.x > x ) x = cmp.x;
+    if( cmp.y > y ) y = cmp.y;
+    if( cmp.z > z ) z = cmp.z;
+   }
+
+   /** Generates a vector perpendicular to this vector (eg an 'up' vector).
+   @remarks
+   This method will return a vector which is perpendicular to this
+   vector. There are an infinite number of possibilities but this
+   method will guarantee to generate one of them. If you need more
+   control you should use the Quaternion class.
+   */
+   inline Vector3 perpendicular(void) const
+   {
+    static const Real fSquareZero = (Real)(1e-06 * 1e-06);
+
+    Vector3 perp = this->crossProduct( Vector3::UNIT_X );
+
+    // Check length
+    if( perp.squaredLength() < fSquareZero )
+    {
+     /* This vector is the Y axis multiplied by a scalar, so we have
+     to use another axis.
+     */
+     perp = this->crossProduct( Vector3::UNIT_Y );
+    }
+    perp.normalise();
+
+    return perp;
+   }
+   /** Generates a new random vector which deviates from this vector by a
+   given angle in a random direction.
+   @remarks
+   This method assumes that the random number generator has already
+   been seeded appropriately.
+   @param
+   angle The angle at which to deviate
+   @param
+   up Any vector perpendicular to this one (which could generated
+   by cross-product of this vector and any other non-colinear
+   vector). If you choose not to provide this the function will
+   derive one on it's own, however if you provide one yourself the
+   function will be faster (this allows you to reuse up vectors if
+   you call this method more than once)
+   @returns
+   A random vector which deviates from this vector by angle. This
+   vector will not be normalised, normalise it if you wish
+   afterwards.
+   */
+   inline Vector3 randomDeviant(
+    const Radian& angle,
+    const Vector3& up = Vector3::ZERO ) const
+   {
+    Vector3 newUp;
+
+    if (up == Vector3::ZERO)
+    {
+     // Generate an up vector
+     newUp = this->perpendicular();
+    }
+    else
+    {
+     newUp = up;
+    }
+
+    // Rotate up vector by random amount around this
+    Quaternion q;
+    q.FromAngleAxis( Radian(Math::UnitRandom() * Math::TWO_PI), *this );
+    newUp = q * newUp;
+
+    // Finally rotate this by given angle around randomised up
+    q.FromAngleAxis( angle, newUp );
+    return q * (*this);
+   }
+
+   /** Gets the angle between 2 vectors.
+   @remarks
+   Vectors do not have to be unit-length but must represent directions.
+   */
+   inline Radian angleBetween(const Vector3& dest)
+   {
+    Real lenProduct = length() * dest.length();
+
+    // Divide by zero check
+    if(lenProduct < 1e-6f)
+     lenProduct = 1e-6f;
+
+    Real f = dotProduct(dest) / lenProduct;
+
+    f = Math::Clamp(f, (Real)-1.0, (Real)1.0);
+    return Math::ACos(f);
+
+   }
+   /** Gets the shortest arc quaternion to rotate this vector to the destination
+   vector.
+   @remarks
+   If you call this with a dest vector that is close to the inverse
+   of this vector, we will rotate 180 degrees around the 'fallbackAxis'
+   (if specified, or a generated axis if not) since in this case
+   ANY axis of rotation is valid.
+   */
+   Quaternion getRotationTo(const Vector3& dest,
+    const Vector3& fallbackAxis = Vector3::ZERO) const
+   {
+    // Based on Stan Melax's article in Game Programming Gems
+    Quaternion q;
+    // Copy, since cannot modify local
+    Vector3 v0 = *this;
+    Vector3 v1 = dest;
+    v0.normalise();
+    v1.normalise();
+
+    Real d = v0.dotProduct(v1);
+    // If dot == 1, vectors are the same
+    if (d >= 1.0f)
+    {
+     return Quaternion::IDENTITY;
+    }
+    if (d < (1e-6f - 1.0f))
+    {
+     if (fallbackAxis != Vector3::ZERO)
+     {
+      // rotate 180 degrees about the fallback axis
+      q.FromAngleAxis(Radian(Math::PI), fallbackAxis);
+     }
+     else
+     {
+      // Generate an axis
+      Vector3 axis = Vector3::UNIT_X.crossProduct(*this);
+      if (axis.isZeroLength()) // pick another if colinear
+       axis = Vector3::UNIT_Y.crossProduct(*this);
+      axis.normalise();
+      q.FromAngleAxis(Radian(Math::PI), axis);
+     }
+    }
+    else
+    {
+     Real s = Math::Sqrt( (1+d)*2 );
+     Real invs = 1 / s;
+
+     Vector3 c = v0.crossProduct(v1);
+
+     q.x = c.x * invs;
+     q.y = c.y * invs;
+     q.z = c.z * invs;
+     q.w = s * 0.5f;
+     q.normalise();
+    }
+    return q;
+   }
+
+   /** Returns true if this vector is zero length. */
+   inline bool isZeroLength(void) const
+   {
+    Real sqlen = (x * x) + (y * y) + (z * z);
+    return (sqlen < (1e-06 * 1e-06));
+
+   }
+
+   /** As normalise, except that this vector is unaffected and the
+   normalised vector is returned as a copy. */
+   inline Vector3 normalisedCopy(void) const
+   {
+    Vector3 ret = *this;
+    ret.normalise();
+    return ret;
+   }
+
+   /** Calculates a reflection vector to the plane with the given normal .
+   @remarks NB assumes 'this' is pointing AWAY FROM the plane, invert if it is not.
+   */
+   inline Vector3 reflect(const Vector3& normal) const
+   {
+    return Vector3( *this - ( 2 * this->dotProduct(normal) * normal ) );
+   }
+
+   /** Returns whether this vector is within a positional tolerance
+   of another vector.
+   @param rhs The vector to compare with
+   @param tolerance The amount that each element of the vector may vary by
+   and still be considered equal
+   */
+   inline bool positionEquals(const Vector3& rhs, Real tolerance = 1e-03) const
+   {
+    return Math::RealEqual(x, rhs.x, tolerance) &&
+     Math::RealEqual(y, rhs.y, tolerance) &&
+     Math::RealEqual(z, rhs.z, tolerance);
+
+   }
+
+   /** Returns whether this vector is within a positional tolerance
+   of another vector, also take scale of the vectors into account.
+   @param rhs The vector to compare with
+   @param tolerance The amount (related to the scale of vectors) that distance
+   of the vector may vary by and still be considered close
+   */
+   inline bool positionCloses(const Vector3& rhs, Real tolerance = 1e-03f) const
+   {
+    return squaredDistance(rhs) <=
+     (squaredLength() + rhs.squaredLength()) * tolerance;
+   }
+
+   /** Returns whether this vector is within a directional tolerance
+   of another vector.
+   @param rhs The vector to compare with
+   @param tolerance The maximum angle by which the vectors may vary and
+   still be considered equal
+   @note Both vectors should be normalised.
+   */
+   inline bool directionEquals(const Vector3& rhs,
+    const Radian& tolerance) const
+   {
+    Real dot = dotProduct(rhs);
+    Radian angle = Math::ACos(dot);
+
+    return Math::Abs(angle.valueRadians()) <= tolerance.valueRadians();
+
+   }
+
+   /// Check whether this vector contains valid values
+   inline bool isNaN() const
+   {
+    return Math::isNaN(x) || Math::isNaN(y) || Math::isNaN(z);
+   }
+
+   /// Extract the primary (dominant) axis from this direction vector
+   inline Vector3 primaryAxis() const
+   {
+    Real absx = Math::Abs(x);
+    Real absy = Math::Abs(y);
+    Real absz = Math::Abs(z);
+    if (absx > absy)
+     if (absx > absz)
+      return x > 0 ? Vector3::UNIT_X : Vector3::NEGATIVE_UNIT_X;
+     else
+      return z > 0 ? Vector3::UNIT_Z : Vector3::NEGATIVE_UNIT_Z;
+    else // absx <= absy
+     if (absy > absz)
+      return y > 0 ? Vector3::UNIT_Y : Vector3::NEGATIVE_UNIT_Y;
+     else
+      return z > 0 ? Vector3::UNIT_Z : Vector3::NEGATIVE_UNIT_Z;
+
+
+   }
+
+   // special points
+   static const Vector3 ZERO;
+   static const Vector3 UNIT_X;
+   static const Vector3 UNIT_Y;
+   static const Vector3 UNIT_Z;
+   static const Vector3 NEGATIVE_UNIT_X;
+   static const Vector3 NEGATIVE_UNIT_Y;
+   static const Vector3 NEGATIVE_UNIT_Z;
+   static const Vector3 UNIT_SCALE;
+
+   /** Function for writing to a stream.
+   */
+   inline friend std::ostream& operator <<
+    ( std::ostream& o, const Vector3& v )
+   {
+    o << "Vector3(" << v.x << ", " << v.y << ", " << v.z << ")";
+    return o;
+   }
   };
+  /** @} */
+  /** @} */
+
+
+
+
+
+
+  // -----------------------------------------------------------------------------------
+
+
+
+  /** \addtogroup Core
+  *  @{
+  */
+  /** \addtogroup Math
+  *  @{
+  */
+  /** 4-dimensional homogeneous vector.
+  */
+  template<typename o_O> class Vector4T
+  {
+  public:
+   Real x, y, z, w;
+
+   typedef Private::MathT<o_O>            Math;
+   typedef Private::DegreeT<o_O>          Degree;
+   typedef Private::RadianT<o_O>          Radian;
+   typedef Private::Vector2T<o_O>         Vector2;
+   typedef Private::Vector3T<o_O>         Vector3;
+   typedef Private::Vector4T<o_O>         Vector4;
+   typedef Private::QuaternionT<o_O>      Quaternion;
+   typedef Private::RayT<o_O>             Ray;
+   typedef Private::SphereT<o_O>          Sphere;
+   typedef Private::PlaneT<o_O>           Plane;
+   typedef Private::AxisAlignedBoxT<o_O>  AxisAlignedBox;
+   typedef Private::Matrix3T<o_O>         Matrix3;
+   typedef Private::Matrix4T<o_O>         Matrix4;
+
+   inline Vector4()
+   {
+   }
+
+   inline Vector4( const Real fX, const Real fY, const Real fZ, const Real fW )
+    : x( fX ), y( fY ), z( fZ ), w( fW)
+   {
+   }
+
+   inline explicit Vector4( const Real afCoordinate[4] )
+    : x( afCoordinate[0] ),
+    y( afCoordinate[1] ),
+    z( afCoordinate[2] ),
+    w( afCoordinate[3] )
+   {
+   }
+
+   inline explicit Vector4( const int afCoordinate[4] )
+   {
+    x = (Real)afCoordinate[0];
+    y = (Real)afCoordinate[1];
+    z = (Real)afCoordinate[2];
+    w = (Real)afCoordinate[3];
+   }
+
+   inline explicit Vector4( Real* const r )
+    : x( r[0] ), y( r[1] ), z( r[2] ), w( r[3] )
+   {
+   }
+
+   inline explicit Vector4( const Real scaler )
+    : x( scaler )
+    , y( scaler )
+    , z( scaler )
+    , w( scaler )
+   {
+   }
+
+   inline explicit Vector4(const Vector3& rhs)
+    : x(rhs.x), y(rhs.y), z(rhs.z), w(1.0f)
+   {
+   }
+
+   /** Exchange the contents of this vector with another. 
+   */
+   inline void swap(Vector4& other)
+   {
+    std::swap(x, other.x);
+    std::swap(y, other.y);
+    std::swap(z, other.z);
+    std::swap(w, other.w);
+   }
+
+   inline Real operator [] ( const size_t i ) const
+   {
+    assert( i < 4 );
+
+    return *(&x+i);
+   }
+
+   inline Real& operator [] ( const size_t i )
+   {
+    assert( i < 4 );
+
+    return *(&x+i);
+   }
+
+   /// Pointer accessor for direct copying
+   inline Real* ptr()
+   {
+    return &x;
+   }
+   /// Pointer accessor for direct copying
+   inline const Real* ptr() const
+   {
+    return &x;
+   }
+
+   /** Assigns the value of the other vector.
+   @param
+   rkVector The other vector
+   */
+   inline Vector4& operator = ( const Vector4& rkVector )
+   {
+    x = rkVector.x;
+    y = rkVector.y;
+    z = rkVector.z;
+    w = rkVector.w;
+
+    return *this;
+   }
+
+   inline Vector4& operator = ( const Real fScalar)
+   {
+    x = fScalar;
+    y = fScalar;
+    z = fScalar;
+    w = fScalar;
+    return *this;
+   }
+
+   inline bool operator == ( const Vector4& rkVector ) const
+   {
+    return ( x == rkVector.x &&
+     y == rkVector.y &&
+     z == rkVector.z &&
+     w == rkVector.w );
+   }
+
+   inline bool operator != ( const Vector4& rkVector ) const
+   {
+    return ( x != rkVector.x ||
+     y != rkVector.y ||
+     z != rkVector.z ||
+     w != rkVector.w );
+   }
+
+   inline Vector4& operator = (const Vector3& rhs)
+   {
+    x = rhs.x;
+    y = rhs.y;
+    z = rhs.z;
+    w = 1.0f;
+    return *this;
+   }
+
+   // arithmetic operations
+   inline Vector4 operator + ( const Vector4& rkVector ) const
+   {
+    return Vector4(
+     x + rkVector.x,
+     y + rkVector.y,
+     z + rkVector.z,
+     w + rkVector.w);
+   }
+
+   inline Vector4 operator - ( const Vector4& rkVector ) const
+   {
+    return Vector4(
+     x - rkVector.x,
+     y - rkVector.y,
+     z - rkVector.z,
+     w - rkVector.w);
+   }
+
+   inline Vector4 operator * ( const Real fScalar ) const
+   {
+    return Vector4(
+     x * fScalar,
+     y * fScalar,
+     z * fScalar,
+     w * fScalar);
+   }
+
+   inline Vector4 operator * ( const Vector4& rhs) const
+   {
+    return Vector4(
+     rhs.x * x,
+     rhs.y * y,
+     rhs.z * z,
+     rhs.w * w);
+   }
+
+   inline Vector4 operator / ( const Real fScalar ) const
+   {
+    assert( fScalar != 0.0 );
+
+    Real fInv = 1.0f / fScalar;
+
+    return Vector4(
+     x * fInv,
+     y * fInv,
+     z * fInv,
+     w * fInv);
+   }
+
+   inline Vector4 operator / ( const Vector4& rhs) const
+   {
+    return Vector4(
+     x / rhs.x,
+     y / rhs.y,
+     z / rhs.z,
+     w / rhs.w);
+   }
+
+   inline const Vector4& operator + () const
+   {
+    return *this;
+   }
+
+   inline Vector4 operator - () const
+   {
+    return Vector4(-x, -y, -z, -w);
+   }
+
+   inline friend Vector4 operator * ( const Real fScalar, const Vector4& rkVector )
+   {
+    return Vector4(
+     fScalar * rkVector.x,
+     fScalar * rkVector.y,
+     fScalar * rkVector.z,
+     fScalar * rkVector.w);
+   }
+
+   inline friend Vector4 operator / ( const Real fScalar, const Vector4& rkVector )
+   {
+    return Vector4(
+     fScalar / rkVector.x,
+     fScalar / rkVector.y,
+     fScalar / rkVector.z,
+     fScalar / rkVector.w);
+   }
+
+   inline friend Vector4 operator + (const Vector4& lhs, const Real rhs)
+   {
+    return Vector4(
+     lhs.x + rhs,
+     lhs.y + rhs,
+     lhs.z + rhs,
+     lhs.w + rhs);
+   }
+
+   inline friend Vector4 operator + (const Real lhs, const Vector4& rhs)
+   {
+    return Vector4(
+     lhs + rhs.x,
+     lhs + rhs.y,
+     lhs + rhs.z,
+     lhs + rhs.w);
+   }
+
+   inline friend Vector4 operator - (const Vector4& lhs, Real rhs)
+   {
+    return Vector4(
+     lhs.x - rhs,
+     lhs.y - rhs,
+     lhs.z - rhs,
+     lhs.w - rhs);
+   }
+
+   inline friend Vector4 operator - (const Real lhs, const Vector4& rhs)
+   {
+    return Vector4(
+     lhs - rhs.x,
+     lhs - rhs.y,
+     lhs - rhs.z,
+     lhs - rhs.w);
+   }
+
+   // arithmetic updates
+   inline Vector4& operator += ( const Vector4& rkVector )
+   {
+    x += rkVector.x;
+    y += rkVector.y;
+    z += rkVector.z;
+    w += rkVector.w;
+
+    return *this;
+   }
+
+   inline Vector4& operator -= ( const Vector4& rkVector )
+   {
+    x -= rkVector.x;
+    y -= rkVector.y;
+    z -= rkVector.z;
+    w -= rkVector.w;
+
+    return *this;
+   }
+
+   inline Vector4& operator *= ( const Real fScalar )
+   {
+    x *= fScalar;
+    y *= fScalar;
+    z *= fScalar;
+    w *= fScalar;
+    return *this;
+   }
+
+   inline Vector4& operator += ( const Real fScalar )
+   {
+    x += fScalar;
+    y += fScalar;
+    z += fScalar;
+    w += fScalar;
+    return *this;
+   }
+
+   inline Vector4& operator -= ( const Real fScalar )
+   {
+    x -= fScalar;
+    y -= fScalar;
+    z -= fScalar;
+    w -= fScalar;
+    return *this;
+   }
+
+   inline Vector4& operator *= ( const Vector4& rkVector )
+   {
+    x *= rkVector.x;
+    y *= rkVector.y;
+    z *= rkVector.z;
+    w *= rkVector.w;
+
+    return *this;
+   }
+
+   inline Vector4& operator /= ( const Real fScalar )
+   {
+    assert( fScalar != 0.0 );
+
+    Real fInv = 1.0f / fScalar;
+
+    x *= fInv;
+    y *= fInv;
+    z *= fInv;
+    w *= fInv;
+
+    return *this;
+   }
+
+   inline Vector4& operator /= ( const Vector4& rkVector )
+   {
+    x /= rkVector.x;
+    y /= rkVector.y;
+    z /= rkVector.z;
+    w /= rkVector.w;
+
+    return *this;
+   }
+
+   /** Calculates the dot (scalar) product of this vector with another.
+   @param
+   vec Vector with which to calculate the dot product (together
+   with this one).
+   @returns
+   A float representing the dot product value.
+   */
+   inline Real dotProduct(const Vector4& vec) const
+   {
+    return x * vec.x + y * vec.y + z * vec.z + w * vec.w;
+   }
+   /// Check whether this vector contains valid values
+   inline bool isNaN() const
+   {
+    return Math::isNaN(x) || Math::isNaN(y) || Math::isNaN(z) || Math::isNaN(w);
+   }
+   /** Function for writing to a stream.
+   */
+   inline friend std::ostream& operator <<
+    ( std::ostream& o, const Vector4& v )
+   {
+    o << "Vector4(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
+    return o;
+   }
+   // special
+   static const Vector4 ZERO;
+  }; // class Vector4
+  /** @} */
+  /** @} */
+
+
+
+
+
+
+
+
+  // -----------------------------------------------------------------------------------
+
+
+
+  /** \addtogroup Core
+  *  @{
+  */
+  /** \addtogroup Math
+  *  @{
+  */
+  /** Implementation of a Quaternion, i.e. a rotation around an axis.
+  */
+  template<typename o_O> class QuaternionT
+  {
+  public:
+
+   typedef Private::MathT<o_O>            Math;
+   typedef Private::DegreeT<o_O>          Degree;
+   typedef Private::RadianT<o_O>          Radian;
+   typedef Private::Vector2T<o_O>         Vector2;
+   typedef Private::Vector3T<o_O>         Vector3;
+   typedef Private::Vector4T<o_O>         Vector4;
+   typedef Private::QuaternionT<o_O>      Quaternion;
+   typedef Private::RayT<o_O>             Ray;
+   typedef Private::SphereT<o_O>          Sphere;
+   typedef Private::PlaneT<o_O>           Plane;
+   typedef Private::AxisAlignedBoxT<o_O>  AxisAlignedBox;
+   typedef Private::Matrix3T<o_O>         Matrix3;
+   typedef Private::Matrix4T<o_O>         Matrix4;
+
+   /// Default constructor, initializes to identity rotation (aka 0°)
+   inline Quaternion ()
+    : w(1), x(0), y(0), z(0)
+   {
+   }
+   /// Construct from an explicit list of values
+   inline Quaternion (
+    Real fW,
+    Real fX, Real fY, Real fZ)
+    : w(fW), x(fX), y(fY), z(fZ)
+   {
+   }
+   /// Construct a quaternion from a rotation matrix
+   inline Quaternion(const Matrix3& rot)
+   {
+    this->FromRotationMatrix(rot);
+   }
+   /// Construct a quaternion from an angle/axis
+   inline Quaternion(const Radian& rfAngle, const Vector3& rkAxis)
+   {
+    this->FromAngleAxis(rfAngle, rkAxis);
+   }
+   /// Construct a quaternion from 3 orthonormal local axes
+   inline Quaternion(const Vector3& xaxis, const Vector3& yaxis, const Vector3& zaxis)
+   {
+    this->FromAxes(xaxis, yaxis, zaxis);
+   }
+   /// Construct a quaternion from 3 orthonormal local axes
+   inline Quaternion(const Vector3* akAxis)
+   {
+    this->FromAxes(akAxis);
+   }
+   /// Construct a quaternion from 4 manual w/x/y/z values
+   inline Quaternion(Real* valptr)
+   {
+    memcpy(&w, valptr, sizeof(Real)*4);
+   }
+
+   /** Exchange the contents of this quaternion with another. 
+   */
+   inline void swap(Quaternion& other)
+   {
+    std::swap(w, other.w);
+    std::swap(x, other.x);
+    std::swap(y, other.y);
+    std::swap(z, other.z);
+   }
+
+   /// Array accessor operator
+   inline Real operator [] ( const size_t i ) const
+   {
+    assert( i < 4 );
+
+    return *(&w+i);
+   }
+
+   /// Array accessor operator
+   inline Real& operator [] ( const size_t i )
+   {
+    assert( i < 4 );
+
+    return *(&w+i);
+   }
+
+   /// Pointer accessor for direct copying
+   inline Real* ptr()
+   {
+    return &w;
+   }
+
+   /// Pointer accessor for direct copying
+   inline const Real* ptr() const
+   {
+    return &w;
+   }
+
+   void FromRotationMatrix (const Matrix3& kRot);
+   void ToRotationMatrix (Matrix3& kRot) const;
+   void FromAngleAxis (const Radian& rfAngle, const Vector3& rkAxis);
+   void ToAngleAxis (Radian& rfAngle, Vector3& rkAxis) const;
+   inline void ToAngleAxis (Degree& dAngle, Vector3& rkAxis) const {
+    Radian rAngle;
+    ToAngleAxis ( rAngle, rkAxis );
+    dAngle = rAngle;
+   }
+   void FromAxes (const Vector3* akAxis);
+   void FromAxes (const Vector3& xAxis, const Vector3& yAxis, const Vector3& zAxis);
+   void ToAxes (Vector3* akAxis) const;
+   void ToAxes (Vector3& xAxis, Vector3& yAxis, Vector3& zAxis) const;
+   /// Get the local x-axis
+   Vector3 xAxis(void) const;
+   /// Get the local y-axis
+   Vector3 yAxis(void) const;
+   /// Get the local z-axis
+   Vector3 zAxis(void) const;
+
+   inline Quaternion& operator= (const Quaternion& rkQ)
+   {
+    w = rkQ.w;
+    x = rkQ.x;
+    y = rkQ.y;
+    z = rkQ.z;
+    return *this;
+   }
+   Quaternion operator+ (const Quaternion& rkQ) const;
+   Quaternion operator- (const Quaternion& rkQ) const;
+   Quaternion operator* (const Quaternion& rkQ) const;
+   Quaternion operator* (Real fScalar) const;
+   friend Quaternion operator* (Real fScalar,
+    const Quaternion& rkQ);
+   Quaternion operator- () const;
+   inline bool operator== (const Quaternion& rhs) const
+   {
+    return (rhs.x == x) && (rhs.y == y) &&
+     (rhs.z == z) && (rhs.w == w);
+   }
+   inline bool operator!= (const Quaternion& rhs) const
+   {
+    return !operator==(rhs);
+   }
+   // functions of a quaternion
+   Real Dot (const Quaternion& rkQ) const;  // dot product
+   Real Norm () const;  // squared-length
+   /// Normalises this quaternion, and returns the previous length
+   Real normalise(void); 
+   Quaternion Inverse () const;  // apply to non-zero quaternion
+   Quaternion UnitInverse () const;  // apply to unit-length quaternion
+   Quaternion Exp () const;
+   Quaternion Log () const;
+
+   // rotation of a vector by a quaternion
+   Vector3 operator* (const Vector3& rkVector) const;
+
+   /** Calculate the local roll element of this quaternion.
+   @param reprojectAxis By default the method returns the 'intuitive' result
+   that is, if you projected the local Y of the quaternion onto the X and
+   Y axes, the angle between them is returned. If set to false though, the
+   result is the actual yaw that will be used to implement the quaternion,
+   which is the shortest possible path to get to the same orientation and 
+   may involve less axial rotation. 
+   */
+   Radian getRoll(bool reprojectAxis = true) const;
+   /** Calculate the local pitch element of this quaternion
+   @param reprojectAxis By default the method returns the 'intuitive' result
+   that is, if you projected the local Z of the quaternion onto the X and
+   Y axes, the angle between them is returned. If set to true though, the
+   result is the actual yaw that will be used to implement the quaternion,
+   which is the shortest possible path to get to the same orientation and 
+   may involve less axial rotation. 
+   */
+   Radian getPitch(bool reprojectAxis = true) const;
+   /** Calculate the local yaw element of this quaternion
+   @param reprojectAxis By default the method returns the 'intuitive' result
+   that is, if you projected the local Z of the quaternion onto the X and
+   Z axes, the angle between them is returned. If set to true though, the
+   result is the actual yaw that will be used to implement the quaternion,
+   which is the shortest possible path to get to the same orientation and 
+   may involve less axial rotation. 
+   */
+   Radian getYaw(bool reprojectAxis = true) const;		
+   /// Equality with tolerance (tolerance is max angle difference)
+   bool equals(const Quaternion& rhs, const Radian& tolerance) const;
+
+   // spherical linear interpolation
+   static Quaternion Slerp (Real fT, const Quaternion& rkP,
+    const Quaternion& rkQ, bool shortestPath = false);
+
+   static Quaternion SlerpExtraSpins (Real fT,
+    const Quaternion& rkP, const Quaternion& rkQ,
+    int iExtraSpins);
+
+   // setup for spherical quadratic interpolation
+   static void Intermediate (const Quaternion& rkQ0,
+    const Quaternion& rkQ1, const Quaternion& rkQ2,
+    Quaternion& rka, Quaternion& rkB);
+
+   // spherical quadratic interpolation
+   static Quaternion Squad (Real fT, const Quaternion& rkP,
+    const Quaternion& rkA, const Quaternion& rkB,
+    const Quaternion& rkQ, bool shortestPath = false);
+
+   // normalised linear interpolation - faster but less accurate (non-constant rotation velocity)
+   static Quaternion nlerp(Real fT, const Quaternion& rkP, 
+    const Quaternion& rkQ, bool shortestPath = false);
+
+   // cutoff for sine near zero
+   static const Real ms_fEpsilon;
+
+   // special values
+   static const Quaternion ZERO;
+   static const Quaternion IDENTITY;
+
+   Real w, x, y, z;
+
+   /// Check whether this quaternion contains valid values
+   inline bool isNaN() const
+   {
+    return Math::isNaN(x) || Math::isNaN(y) || Math::isNaN(z) || Math::isNaN(w);
+   }
+
+   /** Function for writing to a stream. Outputs "Quaternion(w, x, y, z)" with w,x,y,z
+   being the member values of the quaternion.
+   */
+   inline friend std::ostream& operator <<
+    ( std::ostream& o, const Quaternion& q )
+   {
+    o << "Quaternion(" << q.w << ", " << q.x << ", " << q.y << ", " << q.z << ")";
+    return o;
+   }
+
+  };
+  /** @} */
+  /** @} */
+
+
+
+
+
+
+
+  // ---------------------------------------------------------------------------------------------
+
+
+
+
+  /** \addtogroup Core
+  *  @{
+  */
+  /** \addtogroup Math
+  *  @{
+  */
+  /** Representation of a ray in space, i.e. a line with an origin and direction. */
+  template<typename o_O> class RayT
+  {
+
+  public:
+
+   typedef Private::MathT<o_O>            Math;
+   typedef Private::DegreeT<o_O>          Degree;
+   typedef Private::RadianT<o_O>          Radian;
+   typedef Private::Vector2T<o_O>         Vector2;
+   typedef Private::Vector3T<o_O>         Vector3;
+   typedef Private::Vector4T<o_O>         Vector4;
+   typedef Private::QuaternionT<o_O>      Quaternion;
+   typedef Private::RayT<o_O>             Ray;
+   typedef Private::SphereT<o_O>          Sphere;
+   typedef Private::PlaneT<o_O>           Plane;
+   typedef Private::AxisAlignedBoxT<o_O>  AxisAlignedBox;
+   typedef Private::Matrix3T<o_O>         Matrix3;
+   typedef Private::Matrix4T<o_O>         Matrix4;
+
+  protected:
+   Vector3 mOrigin;
+   Vector3 mDirection;
+  public:
+
+   Ray():mOrigin(Vector3::ZERO), mDirection(Vector3::UNIT_Z) {}
+   Ray(const Vector3& origin, const Vector3& direction)
+    :mOrigin(origin), mDirection(direction) {}
+
+   /** Sets the origin of the ray. */
+   void setOrigin(const Vector3& origin) {mOrigin = origin;} 
+   /** Gets the origin of the ray. */
+   const Vector3& getOrigin(void) const {return mOrigin;} 
+
+   /** Sets the direction of the ray. */
+   void setDirection(const Vector3& dir) {mDirection = dir;} 
+   /** Gets the direction of the ray. */
+   const Vector3& getDirection(void) const {return mDirection;} 
+
+   /** Gets the position of a point t units along the ray. */
+   Vector3 getPoint(Real t) const { 
+    return Vector3(mOrigin + (mDirection * t));
+   }
+
+   /** Gets the position of a point t units along the ray. */
+   Vector3 operator*(Real t) const { 
+    return getPoint(t);
+   }
+
+   /** Tests whether this ray intersects the given plane. 
+   @returns A pair structure where the first element indicates whether
+   an intersection occurs, and if true, the second element will
+   indicate the distance along the ray at which it intersects. 
+   This can be converted to a point in space by calling getPoint().
+   */
+   std::pair<bool, Real> intersects(const Plane& p) const
+   {
+    return Math::intersects(*this, p);
+   }
+
+#if BETAJAEN_NEEDS_TO_DO
+   /** Tests whether this ray intersects the given plane bounded volume. 
+   @returns A pair structure where the first element indicates whether
+   an intersection occurs, and if true, the second element will
+   indicate the distance along the ray at which it intersects. 
+   This can be converted to a point in space by calling getPoint().
+   */
+   std::pair<bool, Real> intersects(const PlaneBoundedVolume& p) const
+   {
+    return Math::intersects(*this, p.planes, p.outside == Plane::POSITIVE_SIDE);
+   }
+
+#endif
+   /** Tests whether this ray intersects the given sphere. 
+   @returns A pair structure where the first element indicates whether
+   an intersection occurs, and if true, the second element will
+   indicate the distance along the ray at which it intersects. 
+   This can be converted to a point in space by calling getPoint().
+   */
+   std::pair<bool, Real> intersects(const Sphere& s) const
+   {
+    return Math::intersects(*this, s);
+   }
+   /** Tests whether this ray intersects the given box. 
+   @returns A pair structure where the first element indicates whether
+   an intersection occurs, and if true, the second element will
+   indicate the distance along the ray at which it intersects. 
+   This can be converted to a point in space by calling getPoint().
+   */
+   std::pair<bool, Real> intersects(const AxisAlignedBox& box) const
+   {
+    return Math::intersects(*this, box);
+   }
+
+  };
+  /** @} */
+  /** @} */
+
+
+
+
+
+  // ----------------------------------------------------------------------------------------
+
+
+
+
+
+  /** \addtogroup Core
+  *  @{
+  */
+  /** \addtogroup Math
+  *  @{
+  */
+  /** A sphere primitive, mostly used for bounds checking. 
+  @remarks
+  A sphere in math texts is normally represented by the function
+  x^2 + y^2 + z^2 = r^2 (for sphere's centered on the origin). Ogre stores spheres
+  simply as a center point and a radius.
+  */
+  template<typename o_O> class SphereT
+  {
+
+  public:
+
+   typedef Private::MathT<o_O>            Math;
+   typedef Private::DegreeT<o_O>          Degree;
+   typedef Private::RadianT<o_O>          Radian;
+   typedef Private::Vector2T<o_O>         Vector2;
+   typedef Private::Vector3T<o_O>         Vector3;
+   typedef Private::Vector4T<o_O>         Vector4;
+   typedef Private::QuaternionT<o_O>      Quaternion;
+   typedef Private::RayT<o_O>             Ray;
+   typedef Private::SphereT<o_O>          Sphere;
+   typedef Private::PlaneT<o_O>           Plane;
+   typedef Private::AxisAlignedBoxT<o_O>  AxisAlignedBox;
+   typedef Private::Matrix3T<o_O>         Matrix3;
+   typedef Private::Matrix4T<o_O>         Matrix4;
+
+
+  protected:
+   Real mRadius;
+   Vector3 mCenter;
+  public:
+
+   /** Standard constructor - creates a unit sphere around the origin.*/
+   Sphere() : mRadius(1.0), mCenter(Vector3::ZERO) {}
+   /** Constructor allowing arbitrary spheres. 
+   @param center The center point of the sphere.
+   @param radius The radius of the sphere.
+   */
+   Sphere(const Vector3& center, Real radius)
+    : mRadius(radius), mCenter(center) {}
+
+   /** Returns the radius of the sphere. */
+   Real getRadius(void) const { return mRadius; }
+
+   /** Sets the radius of the sphere. */
+   void setRadius(Real radius) { mRadius = radius; }
+
+   /** Returns the center point of the sphere. */
+   const Vector3& getCenter(void) const { return mCenter; }
+
+   /** Sets the center point of the sphere. */
+   void setCenter(const Vector3& center) { mCenter = center; }
+
+   /** Returns whether or not this sphere intersects another sphere. */
+   bool intersects(const Sphere& s) const
+   {
+    return (s.mCenter - mCenter).squaredLength() <=
+     Math::Sqr(s.mRadius + mRadius);
+   }
+   /** Returns whether or not this sphere intersects a box. */
+   bool intersects(const AxisAlignedBox& box) const
+   {
+    return Math::intersects(*this, box);
+   }
+   /** Returns whether or not this sphere intersects a plane. */
+   bool intersects(const Plane& plane) const
+   {
+    return Math::intersects(*this, plane);
+   }
+   /** Returns whether or not this sphere intersects a point. */
+   bool intersects(const Vector3& v) const
+   {
+    return ((v - mCenter).squaredLength() <= Math::Sqr(mRadius));
+   }
+
+
+  };
+  /** @} */
+  /** @} */
+
+
+
+  // ---------------------------------------------------------------------------------
+
+  /** \addtogroup Core
+  *  @{
+  */
+  /** \addtogroup Math
+  *  @{
+  */
+  /** Defines a plane in 3D space.
+  @remarks
+  A plane is defined in 3D space by the equation
+  Ax + By + Cz + D = 0
+  @par
+  This equates to a vector (the normal of the plane, whose x, y
+  and z components equate to the coefficients A, B and C
+  respectively), and a constant (D) which is the distance along
+  the normal you have to go to move the plane back to the origin.
+  */
+  template<typename o_O> class PlaneT
+  {
+  public:
+
+   typedef Private::MathT<o_O>            Math;
+   typedef Private::DegreeT<o_O>          Degree;
+   typedef Private::RadianT<o_O>          Radian;
+   typedef Private::Vector2T<o_O>         Vector2;
+   typedef Private::Vector3T<o_O>         Vector3;
+   typedef Private::Vector4T<o_O>         Vector4;
+   typedef Private::QuaternionT<o_O>      Quaternion;
+   typedef Private::RayT<o_O>             Ray;
+   typedef Private::SphereT<o_O>          Sphere;
+   typedef Private::PlaneT<o_O>           Plane;
+   typedef Private::AxisAlignedBoxT<o_O>  AxisAlignedBox;
+   typedef Private::Matrix3T<o_O>         Matrix3;
+   typedef Private::Matrix4T<o_O>         Matrix4;
+   
+   /** The "positive side" of the plane is the half space to which the
+   plane normal points. The "negative side" is the other half
+   space. The flag "no side" indicates the plane itself.
+   */
+   enum Side
+   {
+    NO_SIDE,
+    POSITIVE_SIDE,
+    NEGATIVE_SIDE,
+    BOTH_SIDE
+   };
+
+   Plane ()
+   {
+    normal = Vector3::ZERO;
+    d = 0.0;
+   }
+
+   Plane (const Plane& rhs)
+   {
+    normal = rhs.normal;
+    d = rhs.d;
+   }
+
+   Plane (const Vector3& rkNormal, Real fConstant)
+   {
+    normal = rkNormal;
+    d = -fConstant;
+   }
+
+   Plane (Real a, Real b, Real c, Real _d)
+    : normal(a, b, c), d(_d)
+   {
+   }
+
+   Plane (const Vector3& rkNormal, const Vector3& rkPoint)
+   {
+    redefine(rkNormal, rkPoint);
+   }
+
+   Plane (const Vector3& rkPoint0, const Vector3& rkPoint1,
+    const Vector3& rkPoint2)
+   {
+    redefine(rkPoint0, rkPoint1, rkPoint2);
+   }
+
+   Real getDistance (const Vector3& rkPoint) const
+   {
+    return normal.dotProduct(rkPoint) + d;
+   }
+
+   Side getSide (const Vector3& rkPoint) const
+   {
+    Real fDistance = getDistance(rkPoint);
+
+    if ( fDistance < 0.0 )
+     return Plane::NEGATIVE_SIDE;
+
+    if ( fDistance > 0.0 )
+     return Plane::POSITIVE_SIDE;
+
+    return Plane::NO_SIDE;
+   }
+
+
+   Side getSide (const AxisAlignedBox& box) const
+   {
+    if (box.isNull()) 
+     return NO_SIDE;
+    if (box.isInfinite())
+     return BOTH_SIDE;
+
+    return getSide(box.getCenter(), box.getHalfSize());
+   }
+
+   Side getSide (const Vector3& centre, const Vector3& halfSize) const
+   {
+    // Calculate the distance between box centre and the plane
+    Real dist = getDistance(centre);
+
+    // Calculate the maximise allows absolute distance for
+    // the distance between box centre and plane
+    Real maxAbsDist = normal.absDotProduct(halfSize);
+
+    if (dist < -maxAbsDist)
+     return Plane::NEGATIVE_SIDE;
+
+    if (dist > +maxAbsDist)
+     return Plane::POSITIVE_SIDE;
+
+    return Plane::BOTH_SIDE;
+   }
+
+   void redefine(const Vector3& rkPoint0, const Vector3& rkPoint1,
+    const Vector3& rkPoint2)
+   {
+    Vector3 kEdge1 = rkPoint1 - rkPoint0;
+    Vector3 kEdge2 = rkPoint2 - rkPoint0;
+    normal = kEdge1.crossProduct(kEdge2);
+    normal.normalise();
+    d = -normal.dotProduct(rkPoint0);
+   }
+
+   void redefine(const Vector3& rkNormal, const Vector3& rkPoint)
+   {
+    normal = rkNormal;
+    d = -rkNormal.dotProduct(rkPoint);
+   }
+
+   Vector3 projectVector(const Vector3& p) const
+   {
+    // We know plane normal is unit length, so use simple method
+    Matrix3 xform;
+    xform[0][0] = 1.0f - normal.x * normal.x;
+    xform[0][1] = -normal.x * normal.y;
+    xform[0][2] = -normal.x * normal.z;
+    xform[1][0] = -normal.y * normal.x;
+    xform[1][1] = 1.0f - normal.y * normal.y;
+    xform[1][2] = -normal.y * normal.z;
+    xform[2][0] = -normal.z * normal.x;
+    xform[2][1] = -normal.z * normal.y;
+    xform[2][2] = 1.0f - normal.z * normal.z;
+    return xform * p;
+
+   }
+
+   Real normalise(void)
+   {
+    Real fLength = normal.length();
+
+    // Will also work for zero-sized vectors, but will change nothing
+    if (fLength > 1e-08f)
+    {
+     Real fInvLength = 1.0f / fLength;
+     normal *= fInvLength;
+     d *= fInvLength;
+    }
+
+    return fLength;
+   }
+
+   std::ostream& operator<< (std::ostream& o)
+   {
+    o << "Plane(normal=" << p.normal << ", d=" << p.d << ")";
+    return o;
+   }
+
+   
+   Vector3 normal;
+   Real d;
+
+   /// Comparison operator
+   bool operator==(const Plane& rhs) const
+   {
+    return (rhs.d == d && rhs.normal == normal);
+   }
+   bool operator!=(const Plane& rhs) const
+   {
+    return (rhs.d != d && rhs.normal != normal);
+   }
+
+  };
+
+  typedef vector< PlaneT<void> >::type PlaneList;
+  /** @} */
+  /** @} */
 
 
  } // namespace Private
 
 
- typedef Private::MathT<> Math;
+ typedef Private::MathT<>            Math;
+ typedef Private::DegreeT<>          Degree;
+ typedef Private::RadianT<>          Radian;
+ typedef Private::Vector2T<>         Vector2;
+ typedef Private::Vector3T<>         Vector3;
+ typedef Private::Vector4T<>         Vector4;
+ typedef Private::QuaternionT<>      Quaternion;
+ typedef Private::RayT<>             Ray;
+ typedef Private::SphereT<>          Sphere;
+ typedef Private::PlaneT<>           Plane;
+ typedef Private::AxisAlignedBoxT<>  AxisAlignedBox;
+ typedef Private::Matrix3T<>         Matrix3;
+ typedef Private::Matrix4T<>         Matrix4;
+
 
 } // namespace OgreMath
 

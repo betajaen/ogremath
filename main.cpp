@@ -13,4 +13,7 @@ void main()
  OgreMath::Quaternion quat(1.0f, 0.0f, 0.0f, 0.0f);
  
  OgreMath::Plane plane(OgreMath::Vector3::UNIT_Y, 10.0f);
+
+ OgreMath::Matrix3 matrix;
+
 }

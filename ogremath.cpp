@@ -74,5 +74,33 @@ namespace OgreMath
 
   const Vector4 Vector4::ZERO( 0, 0, 0, 0 );
 
- }
-}
+  const AxisAlignedBox AxisAlignedBox::BOX_NULL;
+  const AxisAlignedBox AxisAlignedBox::BOX_INFINITE(AxisAlignedBox::EXTENT_INFINITE);
+
+  const Real Matrix3::EPSILON = 1e-06;
+  const Matrix3 Matrix3::ZERO(0,0,0,0,0,0,0,0,0);
+  const Matrix3 Matrix3::IDENTITY(1,0,0,0,1,0,0,0,1);
+  const Real Matrix3::ms_fSvdEpsilon = 1e-04;
+  const unsigned int Matrix3::ms_iSvdMaxIterations = 32;
+
+      const Matrix4 Matrix4::ZERO(
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0 );
+
+    const Matrix4 Matrix4::IDENTITY(
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1 );
+
+    const Matrix4 Matrix4::CLIPSPACE2DTOIMAGESPACE(
+        0.5,    0,  0, 0.5, 
+          0, -0.5,  0, 0.5, 
+          0,    0,  1,   0,
+          0,    0,  0,   1);
+
+ } // namespace OgreMath::Private
+
+} // namespace OgreMath

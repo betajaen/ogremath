@@ -11,11 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\ogremath.h" />
+    <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\OgreMathLib.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\main.cpp" />
-    <ClCompile Include="..\ogremath.cpp" />
+    <ClInclude Include="..\OgreMathLib.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C7D18374-C953-4625-A014-DA21B9DFBD19}</ProjectGuid>

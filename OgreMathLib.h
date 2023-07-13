@@ -36,6 +36,7 @@
 #include <string>
 #include <ostream>
 #include <sstream>
+#include <algorithm>
 #include "assert.h"
 
 #define OGREMATHLIB_EXPORT

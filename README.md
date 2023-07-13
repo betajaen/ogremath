@@ -13,3 +13,23 @@ ogremath是三维几何计算库，ogremath中的算法提取自OGRE。
 - Ray 射线。提供了和AxisAlignedBox、Plane、Sphere的碰撞检测算法。
 ## 使用方法
 直接把OgreMathLib.h和OgreMathLib.cpp添加到工程中，在适当的地方包含OgreMathLib.h即可。
+
+
+------------
+
+
+# ogremath
+ogremath is a 3D geometric computing library, and the algorithms in ogremath are extracted from OGRE.
+## ogremath特性
+- **Radian**  Store radian values.
+- **Degree** Store the Angle value.
+- **Vector3** A three-dimensional vector representing coordinates or directions. Vector operations such as length of vector, distance between two coordinates, dot product and cross product are provided.
+- **Quaternion** Provide point multiplication, inversion, rotation Vector3, and other four element operations.
+- **Matrix3** Three-dimensional matrix, 3x3.
+- **Matrix4** Four-dimensional matrix, 4x4.
+- **AxisAlignedBox**  It provides collision detection algorithms with Plane, Sphere and Ray.
+- **Plane** Algorithms such as mapping point, distance from point to plane and point position judgment are provided.
+- **Sphere** Provides collision detection algorithms with AxisAlignedBox, Plane, and Vector3.
+- **Ray** Provides collision detection algorithms with AxisAlignedBox, Plane, Sphere.
+## Usage
+Add OgreMathLib.h and OgreMathLib.cpp directly to the project, including OgreMathLib.h where appropriate.

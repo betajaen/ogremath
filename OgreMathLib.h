@@ -36,6 +36,8 @@
 #include <string>
 #include <ostream>
 #include <sstream>
+#include <array>
+#include <algorithm>
 #include "assert.h"
 
 #define OGREMATHLIB_EXPORT
@@ -51,6 +53,10 @@ class Matrix4;
 class Degree;
 class Radian;
 class Math;
+class AxisAlignedBox;
+class Sphere;
+class Plane;
+class Ray;
 
 /** Wrapper class which indicates a given angle value is in Radians.
    @remarks
@@ -274,6 +280,15 @@ public:
   }
   
 };
+
+/** A pair structure where the first element indicates whether
+		an intersection occurs
+
+		if true, the second element will
+		indicate the distance along the ray at which it intersects.
+		This can be converted to a point in space by calling Ray::getPoint().
+	 */
+typedef std::pair<bool, Real> RayTestResult;
 
 /** Class to provide access to common mathematical functions.
        @remarks
@@ -518,8 +533,70 @@ public:
     return std::max(std::min(val, maxval), minval);
   }
   
+  /** Sphere / box intersection test. */
+  static bool intersects(const Sphere& sphere, const AxisAlignedBox& box);
+
+  /** Plane / box intersection test. */
+  static bool intersects(const Plane& plane, const AxisAlignedBox& box);
+
+  /** Sphere / plane intersection test.
+  @remarks NB just do a plane.getDistance(sphere.getCenter()) for more detail!
+  */
+  static bool intersects(const Sphere& sphere, const Plane& plane);
+
+  /** Ray / plane intersection */
+  static inline RayTestResult intersects(const Ray& ray, const Plane& plane);
+  /** Ray / sphere intersection */
+  static RayTestResult intersects(const Ray& ray, const Sphere& sphere, bool discardInside = true);
+  /** Ray / box intersection */
+  static RayTestResult intersects(const Ray& ray, const AxisAlignedBox& box);
+
+  /** Ray / box intersection, returns boolean result and two intersection distance.
+  @param ray
+	  The ray.
+  @param box
+	  The box.
+  @param d1
+	  A real pointer to retrieve the near intersection distance
+	  from the ray origin, maybe <b>null</b> which means don't care
+	  about the near intersection distance.
+  @param d2
+	  A real pointer to retrieve the far intersection distance
+	  from the ray origin, maybe <b>null</b> which means don't care
+	  about the far intersection distance.
+  @return
+	  If the ray is intersects the box, <b>true</b> is returned, and
+	  the near intersection distance is return by <i>d1</i>, the
+	  far intersection distance is return by <i>d2</i>. Guarantee
+	  <b>0</b> <= <i>d1</i> <= <i>d2</i>.
+  @par
+	  If the ray isn't intersects the box, <b>false</b> is returned, and
+	  <i>d1</i> and <i>d2</i> is unmodified.
+  */
+  static bool intersects(const Ray& ray, const AxisAlignedBox& box,
+	  Real* d1, Real* d2);
+
+  /** Ray / triangle intersection @cite moller1997fast, returns boolean result and distance.
+  @param ray
+	  The ray.
+  @param a
+	  The triangle's first vertex.
+  @param b
+	  The triangle's second vertex.
+  @param c
+	  The triangle's third vertex.
+  @param positiveSide
+	  Intersect with "positive side" of the triangle (as determined by vertex winding)
+  @param negativeSide
+	  Intersect with "negative side" of the triangle (as determined by vertex winding)
+  */
+  static RayTestResult intersects(const Ray& ray, const Vector3& a,
+	  const Vector3& b, const Vector3& c,
+	  bool positiveSide = true, bool negativeSide = true);
   
-  
+  /** Calculate a face normal, no w-information. */
+  static Vector3 calculateBasicFaceNormal(const Vector3& v1, const Vector3& v2, const Vector3& v3);
+
   static const Real POS_INFINITY;
   static const Real NEG_INFINITY;
   static const Real PI;
@@ -529,7 +606,6 @@ public:
   static const Real fRad2Deg;
   
 };
-
 
 inline Radian operator * ( Real a, const Radian& b )
 {
@@ -561,7 +637,14 @@ inline Degree operator / ( Real a, const Degree& b )
 class Vector3
 {
 public:
-  Real x, y, z;
+	union
+	{
+		struct
+		{
+			Real x, y, z;
+		};
+		Real datas[3];
+	};
   
 public:
   inline Vector3()
@@ -2338,6 +2421,1145 @@ public:
   
 };
 
+/** A 3D box aligned with the x/y/z axes.
+
+	This class represents a simple box which is aligned with the
+	axes. Internally it only stores 2 points as the extremeties of
+	the box, one which is the minima of all 3 axes, and the other
+	which is the maxima of all 3 axes. This class is typically used
+	for an axis-aligned bounding box (AABB) for collision and
+	visibility determination.
+	*/
+class OGREMATHLIB_EXPORT AxisAlignedBox
+{
+public:
+	enum Extent
+	{
+		EXTENT_NULL,
+		EXTENT_FINITE,
+		EXTENT_INFINITE
+	};
+private:
+
+	Vector3 mMinimum;
+	Vector3 mMaximum;
+	Extent mExtent;
+
+public:
+	/*
+	   1-------2
+	  /|      /|
+	 / |     / |
+	5-------4  |
+	|  0----|--3
+	| /     | /
+	|/      |/
+	6-------7
+	*/
+	enum CornerEnum {
+		FAR_LEFT_BOTTOM = 0,
+		FAR_LEFT_TOP = 1,
+		FAR_RIGHT_TOP = 2,
+		FAR_RIGHT_BOTTOM = 3,
+		NEAR_RIGHT_BOTTOM = 7,
+		NEAR_LEFT_BOTTOM = 6,
+		NEAR_LEFT_TOP = 5,
+		NEAR_RIGHT_TOP = 4
+	};
+	typedef std::array<Vector3, 8> Corners;
+
+	AxisAlignedBox()
+	{
+		// Default to a null box 
+		setMinimum(-0.5, -0.5, -0.5);
+		setMaximum(0.5, 0.5, 0.5);
+		mExtent = EXTENT_NULL;
+	}
+	AxisAlignedBox(Extent e)
+	{
+		setMinimum(-0.5, -0.5, -0.5);
+		setMaximum(0.5, 0.5, 0.5);
+		mExtent = e;
+	}
+
+	AxisAlignedBox(const Vector3& min, const Vector3& max)
+	{
+		setExtents(min, max);
+	}
+
+	AxisAlignedBox(Real mx, Real my, Real mz, Real Mx, Real My, Real Mz)
+	{
+		setExtents(mx, my, mz, Mx, My, Mz);
+	}
+
+	/** Gets the minimum corner of the box.
+	*/
+	inline const Vector3& getMinimum(void) const
+	{
+		return mMinimum;
+	}
+
+	/** Gets a modifiable version of the minimum
+	corner of the box.
+	*/
+	inline Vector3& getMinimum(void)
+	{
+		return mMinimum;
+	}
+
+	/** Gets the maximum corner of the box.
+	*/
+	inline const Vector3& getMaximum(void) const
+	{
+		return mMaximum;
+	}
+
+	/** Gets a modifiable version of the maximum
+	corner of the box.
+	*/
+	inline Vector3& getMaximum(void)
+	{
+		return mMaximum;
+	}
+
+
+	/** Sets the minimum corner of the box.
+	*/
+	inline void setMinimum(const Vector3& vec)
+	{
+		mExtent = EXTENT_FINITE;
+		mMinimum = vec;
+	}
+
+	inline void setMinimum(Real x, Real y, Real z)
+	{
+		mExtent = EXTENT_FINITE;
+		mMinimum.x = x;
+		mMinimum.y = y;
+		mMinimum.z = z;
+	}
+
+	/** Changes one of the components of the minimum corner of the box
+	used to resize only one dimension of the box
+	*/
+	inline void setMinimumX(Real x)
+	{
+		mMinimum.x = x;
+	}
+
+	inline void setMinimumY(Real y)
+	{
+		mMinimum.y = y;
+	}
+
+	inline void setMinimumZ(Real z)
+	{
+		mMinimum.z = z;
+	}
+
+	/** Sets the maximum corner of the box.
+	*/
+	inline void setMaximum(const Vector3& vec)
+	{
+		mExtent = EXTENT_FINITE;
+		mMaximum = vec;
+	}
+
+	inline void setMaximum(Real x, Real y, Real z)
+	{
+		mExtent = EXTENT_FINITE;
+		mMaximum.x = x;
+		mMaximum.y = y;
+		mMaximum.z = z;
+	}
+
+	/** Changes one of the components of the maximum corner of the box
+	used to resize only one dimension of the box
+	*/
+	inline void setMaximumX(Real x)
+	{
+		mMaximum.x = x;
+	}
+
+	inline void setMaximumY(Real y)
+	{
+		mMaximum.y = y;
+	}
+
+	inline void setMaximumZ(Real z)
+	{
+		mMaximum.z = z;
+	}
+
+	/** Sets both minimum and maximum extents at once.
+	*/
+	inline void setExtents(const Vector3& min, const Vector3& max)
+	{
+		assert((min.x <= max.x && min.y <= max.y && min.z <= max.z) &&
+			"The minimum corner of the box must be less than or equal to maximum corner");
+
+		mExtent = EXTENT_FINITE;
+		mMinimum = min;
+		mMaximum = max;
+	}
+
+	inline void setExtents(
+		Real mx, Real my, Real mz,
+		Real Mx, Real My, Real Mz)
+	{
+		assert((mx <= Mx && my <= My && mz <= Mz) &&
+			"The minimum corner of the box must be less than or equal to maximum corner");
+
+		mExtent = EXTENT_FINITE;
+
+		mMinimum.x = mx;
+		mMinimum.y = my;
+		mMinimum.z = mz;
+
+		mMaximum.x = Mx;
+		mMaximum.y = My;
+		mMaximum.z = Mz;
+
+	}
+
+	/** Returns a pointer to an array of 8 corner points, useful for
+	collision vs. non-aligned objects.
+
+	If the order of these corners is important, they are as
+	follows: The 4 points of the minimum Z face (note that
+	because Ogre uses right-handed coordinates, the minimum Z is
+	at the 'back' of the box) starting with the minimum point of
+	all, then anticlockwise around this face (if you are looking
+	onto the face from outside the box). Then the 4 points of the
+	maximum Z face, starting with maximum point of all, then
+	anticlockwise around this face (looking onto the face from
+	outside the box). Like this:
+	<pre>
+	   1-------2
+	  /|      /|
+	 / |     / |
+	5-------4  |
+	|  0----|--3
+	| /     | /
+	|/      |/
+	6-------7
+	</pre>
+	*/
+	inline Corners getAllCorners(void) const
+	{
+		assert((mExtent == EXTENT_FINITE) && "Can't get corners of a null or infinite AAB");
+
+		// The order of these items is, using right-handed coordinates:
+		// Minimum Z face, starting with Min(all), then anticlockwise
+		//   around face (looking onto the face)
+		// Maximum Z face, starting with Max(all), then anticlockwise
+		//   around face (looking onto the face)
+		// Only for optimization/compatibility.
+		Corners corners;
+
+		corners[0] = getCorner(FAR_LEFT_BOTTOM);
+		corners[1] = getCorner(FAR_LEFT_TOP);
+		corners[2] = getCorner(FAR_RIGHT_TOP);
+		corners[3] = getCorner(FAR_RIGHT_BOTTOM);
+
+		corners[4] = getCorner(NEAR_RIGHT_TOP);
+		corners[5] = getCorner(NEAR_LEFT_TOP);
+		corners[6] = getCorner(NEAR_LEFT_BOTTOM);
+		corners[7] = getCorner(NEAR_RIGHT_BOTTOM);
+
+		return corners;
+	}
+
+	/** Gets the position of one of the corners
+	*/
+	Vector3 getCorner(CornerEnum cornerToGet) const
+	{
+		switch (cornerToGet)
+		{
+		case FAR_LEFT_BOTTOM:
+			return mMinimum;
+		case FAR_LEFT_TOP:
+			return Vector3(mMinimum.x, mMaximum.y, mMinimum.z);
+		case FAR_RIGHT_TOP:
+			return Vector3(mMaximum.x, mMaximum.y, mMinimum.z);
+		case FAR_RIGHT_BOTTOM:
+			return Vector3(mMaximum.x, mMinimum.y, mMinimum.z);
+		case NEAR_RIGHT_BOTTOM:
+			return Vector3(mMaximum.x, mMinimum.y, mMaximum.z);
+		case NEAR_LEFT_BOTTOM:
+			return Vector3(mMinimum.x, mMinimum.y, mMaximum.z);
+		case NEAR_LEFT_TOP:
+			return Vector3(mMinimum.x, mMaximum.y, mMaximum.z);
+		case NEAR_RIGHT_TOP:
+			return mMaximum;
+		default:
+			return Vector3();
+		}
+	}
+
+	friend std::ostream& operator<<(std::ostream& o, const AxisAlignedBox &aab)
+	{
+		switch (aab.mExtent)
+		{
+		case EXTENT_NULL:
+			o << "AxisAlignedBox(null)";
+			return o;
+
+		case EXTENT_FINITE:
+			o << "AxisAlignedBox(min=" << aab.mMinimum << ", max=" << aab.mMaximum << ")";
+			return o;
+
+		case EXTENT_INFINITE:
+			o << "AxisAlignedBox(infinite)";
+			return o;
+
+		default: // shut up compiler
+			assert(false && "Never reached");
+			return o;
+		}
+	}
+
+	/** Merges the passed in box into the current box. The result is the
+	box which encompasses both.
+	*/
+	void merge(const AxisAlignedBox& rhs)
+	{
+		// Do nothing if rhs null, or this is infinite
+		if ((rhs.mExtent == EXTENT_NULL) || (mExtent == EXTENT_INFINITE))
+		{
+			return;
+		}
+		// Otherwise if rhs is infinite, make this infinite, too
+		else if (rhs.mExtent == EXTENT_INFINITE)
+		{
+			mExtent = EXTENT_INFINITE;
+		}
+		// Otherwise if current null, just take rhs
+		else if (mExtent == EXTENT_NULL)
+		{
+			setExtents(rhs.mMinimum, rhs.mMaximum);
+		}
+		// Otherwise merge
+		else
+		{
+			Vector3 min = mMinimum;
+			Vector3 max = mMaximum;
+			max.makeCeil(rhs.mMaximum);
+			min.makeFloor(rhs.mMinimum);
+
+			setExtents(min, max);
+		}
+
+	}
+
+	/** Extends the box to encompass the specified point (if needed).
+	*/
+	inline void merge(const Vector3& point)
+	{
+		switch (mExtent)
+		{
+		case EXTENT_NULL: // if null, use this point
+			setExtents(point, point);
+			return;
+
+		case EXTENT_FINITE:
+			mMaximum.makeCeil(point);
+			mMinimum.makeFloor(point);
+			return;
+
+		case EXTENT_INFINITE: // if infinite, makes no difference
+			return;
+		}
+
+		assert(false && "Never reached");
+	}
+
+	/** Transforms the box according to the matrix supplied.
+
+	By calling this method you get the axis-aligned box which
+	surrounds the transformed version of this box. Therefore each
+	corner of the box is transformed by the matrix, then the
+	extents are mapped back onto the axes to produce another
+	AABB. Useful when you have a local AABB for an object which
+	is then transformed.
+	*/
+	inline void transform(const Matrix4& matrix)
+	{
+		// Do nothing if current null or infinite
+		if (mExtent != EXTENT_FINITE)
+			return;
+
+		Vector3 oldMin, oldMax, currentCorner;
+
+		// Getting the old values so that we can use the existing merge method.
+		oldMin = mMinimum;
+		oldMax = mMaximum;
+
+		// reset
+		setNull();
+
+		// We sequentially compute the corners in the following order :
+		// 0, 6, 5, 1, 2, 4 ,7 , 3
+		// This sequence allows us to only change one member at a time to get at all corners.
+
+		// For each one, we transform it using the matrix
+		// Which gives the resulting point and merge the resulting point.
+
+		// First corner 
+		// min min min
+		currentCorner = oldMin;
+		merge(matrix * currentCorner);
+
+		// min,min,max
+		currentCorner.z = oldMax.z;
+		merge(matrix * currentCorner);
+
+		// min max max
+		currentCorner.y = oldMax.y;
+		merge(matrix * currentCorner);
+
+		// min max min
+		currentCorner.z = oldMin.z;
+		merge(matrix * currentCorner);
+
+		// max max min
+		currentCorner.x = oldMax.x;
+		merge(matrix * currentCorner);
+
+		// max max max
+		currentCorner.z = oldMax.z;
+		merge(matrix * currentCorner);
+
+		// max min max
+		currentCorner.y = oldMin.y;
+		merge(matrix * currentCorner);
+
+		// max min min
+		currentCorner.z = oldMin.z;
+		merge(matrix * currentCorner);
+	}
+
+	/** Sets the box to a 'null' value i.e. not a box.
+	*/
+	inline void setNull()
+	{
+		mExtent = EXTENT_NULL;
+	}
+
+	/** Returns true if the box is null i.e. empty.
+	*/
+	inline bool isNull(void) const
+	{
+		return (mExtent == EXTENT_NULL);
+	}
+
+	/** Returns true if the box is finite.
+	*/
+	bool isFinite(void) const
+	{
+		return (mExtent == EXTENT_FINITE);
+	}
+
+	/** Sets the box to 'infinite'
+	*/
+	inline void setInfinite()
+	{
+		mExtent = EXTENT_INFINITE;
+	}
+
+	/** Returns true if the box is infinite.
+	*/
+	bool isInfinite(void) const
+	{
+		return (mExtent == EXTENT_INFINITE);
+	}
+
+	/** Returns whether or not this box intersects another. */
+	inline bool intersects(const AxisAlignedBox& b2) const
+	{
+		// Early-fail for nulls
+		if (this->isNull() || b2.isNull())
+			return false;
+
+		// Early-success for infinites
+		if (this->isInfinite() || b2.isInfinite())
+			return true;
+
+		// Use up to 6 separating planes
+		if (mMaximum.x < b2.mMinimum.x)
+			return false;
+		if (mMaximum.y < b2.mMinimum.y)
+			return false;
+		if (mMaximum.z < b2.mMinimum.z)
+			return false;
+
+		if (mMinimum.x > b2.mMaximum.x)
+			return false;
+		if (mMinimum.y > b2.mMaximum.y)
+			return false;
+		if (mMinimum.z > b2.mMaximum.z)
+			return false;
+
+		// otherwise, must be intersecting
+		return true;
+
+	}
+
+	/// Calculate the area of intersection of this box and another
+	inline AxisAlignedBox intersection(const AxisAlignedBox& b2) const
+	{
+		if (this->isNull() || b2.isNull())
+		{
+			return AxisAlignedBox();
+		}
+		else if (this->isInfinite())
+		{
+			return b2;
+		}
+		else if (b2.isInfinite())
+		{
+			return *this;
+		}
+
+		Vector3 intMin = mMinimum;
+		Vector3 intMax = mMaximum;
+
+		intMin.makeCeil(b2.getMinimum());
+		intMax.makeFloor(b2.getMaximum());
+
+		// Check intersection isn't null
+		if (intMin.x < intMax.x &&
+			intMin.y < intMax.y &&
+			intMin.z < intMax.z)
+		{
+			return AxisAlignedBox(intMin, intMax);
+		}
+
+		return AxisAlignedBox();
+	}
+
+	/// Calculate the volume of this box
+	Real volume(void) const
+	{
+		switch (mExtent)
+		{
+		case EXTENT_NULL:
+			return 0.0f;
+
+		case EXTENT_FINITE:
+		{
+			Vector3 diff = mMaximum - mMinimum;
+			return diff.x * diff.y * diff.z;
+		}
+
+		case EXTENT_INFINITE:
+			return Math::POS_INFINITY;
+
+		default: // shut up compiler
+			assert(false && "Never reached");
+			return 0.0f;
+		}
+	}
+
+	/** Scales the AABB by the vector given. */
+	inline void scale(const Vector3& s)
+	{
+		// Do nothing if current null or infinite
+		if (mExtent != EXTENT_FINITE)
+			return;
+
+		// NB assumes centered on origin
+		Vector3 min = mMinimum * s;
+		Vector3 max = mMaximum * s;
+		setExtents(min, max);
+	}
+
+	/** Tests whether this box intersects a sphere. */
+	bool intersects(const Sphere& s) const
+	{
+		return Math::intersects(s, *this);
+	}
+	/** Tests whether this box intersects a plane. */
+	bool intersects(const Plane& p) const
+	{
+		return Math::intersects(p, *this);
+	}
+	/** Tests whether the vector point is within this box. */
+	bool intersects(const Vector3& v) const
+	{
+		switch (mExtent)
+		{
+		case EXTENT_NULL:
+			return false;
+
+		case EXTENT_FINITE:
+			return(v.x >= mMinimum.x  &&  v.x <= mMaximum.x  &&
+				v.y >= mMinimum.y  &&  v.y <= mMaximum.y  &&
+				v.z >= mMinimum.z  &&  v.z <= mMaximum.z);
+
+		case EXTENT_INFINITE:
+			return true;
+
+		default: // shut up compiler
+			assert(false && "Never reached");
+			return false;
+		}
+	}
+	/// Gets the centre of the box
+	Vector3 getCenter(void) const
+	{
+		assert((mExtent == EXTENT_FINITE) && "Can't get center of a null or infinite AAB");
+
+		return Vector3(
+			(mMaximum.x + mMinimum.x) * 0.5f,
+			(mMaximum.y + mMinimum.y) * 0.5f,
+			(mMaximum.z + mMinimum.z) * 0.5f);
+	}
+	/// Gets the size of the box
+	Vector3 getSize(void) const
+	{
+		switch (mExtent)
+		{
+		case EXTENT_NULL:
+			return Vector3::ZERO;
+
+		case EXTENT_FINITE:
+			return mMaximum - mMinimum;
+
+		case EXTENT_INFINITE:
+			return Vector3(
+				Math::POS_INFINITY,
+				Math::POS_INFINITY,
+				Math::POS_INFINITY);
+
+		default: // shut up compiler
+			assert(false && "Never reached");
+			return Vector3::ZERO;
+		}
+	}
+	/// Gets the half-size of the box
+	Vector3 getHalfSize(void) const
+	{
+		switch (mExtent)
+		{
+		case EXTENT_NULL:
+			return Vector3::ZERO;
+
+		case EXTENT_FINITE:
+			return (mMaximum - mMinimum) * 0.5;
+
+		case EXTENT_INFINITE:
+			return Vector3(
+				Math::POS_INFINITY,
+				Math::POS_INFINITY,
+				Math::POS_INFINITY);
+
+		default: // shut up compiler
+			assert(false && "Never reached");
+			return Vector3::ZERO;
+		}
+	}
+
+	/** Tests whether the given point contained by this box.
+	*/
+	bool contains(const Vector3& v) const
+	{
+		if (isNull())
+			return false;
+		if (isInfinite())
+			return true;
+
+		return mMinimum.x <= v.x && v.x <= mMaximum.x &&
+			mMinimum.y <= v.y && v.y <= mMaximum.y &&
+			mMinimum.z <= v.z && v.z <= mMaximum.z;
+	}
+
+	/** Returns the squared minimum distance between a given point and any part of the box.
+	 *  This is faster than distance since avoiding a squareroot, so use if you can. */
+	Real squaredDistance(const Vector3& v) const
+	{
+
+		if (this->contains(v))
+			return 0;
+		else
+		{
+			Vector3 maxDist(0, 0, 0);
+
+			if (v.x < mMinimum.x)
+				maxDist.x = mMinimum.x - v.x;
+			else if (v.x > mMaximum.x)
+				maxDist.x = v.x - mMaximum.x;
+
+			if (v.y < mMinimum.y)
+				maxDist.y = mMinimum.y - v.y;
+			else if (v.y > mMaximum.y)
+				maxDist.y = v.y - mMaximum.y;
+
+			if (v.z < mMinimum.z)
+				maxDist.z = mMinimum.z - v.z;
+			else if (v.z > mMaximum.z)
+				maxDist.z = v.z - mMaximum.z;
+
+			return maxDist.squaredLength();
+		}
+	}
+
+	/** Returns the minimum distance between a given point and any part of the box. */
+	Real distance(const Vector3& v) const
+	{
+		return OgreMathLib::Math::Sqrt(squaredDistance(v));
+	}
+
+	/** Tests whether another box contained by this box.
+	*/
+	bool contains(const AxisAlignedBox& other) const
+	{
+		if (other.isNull() || this->isInfinite())
+			return true;
+
+		if (this->isNull() || other.isInfinite())
+			return false;
+
+		return this->mMinimum.x <= other.mMinimum.x &&
+			this->mMinimum.y <= other.mMinimum.y &&
+			this->mMinimum.z <= other.mMinimum.z &&
+			other.mMaximum.x <= this->mMaximum.x &&
+			other.mMaximum.y <= this->mMaximum.y &&
+			other.mMaximum.z <= this->mMaximum.z;
+	}
+
+	/** Tests 2 boxes for equality.
+	*/
+	bool operator== (const AxisAlignedBox& rhs) const
+	{
+		if (this->mExtent != rhs.mExtent)
+			return false;
+
+		if (!this->isFinite())
+			return true;
+
+		return this->mMinimum == rhs.mMinimum &&
+			this->mMaximum == rhs.mMaximum;
+	}
+
+	/** Tests 2 boxes for inequality.
+	*/
+	bool operator!= (const AxisAlignedBox& rhs) const
+	{
+		return !(*this == rhs);
+	}
+
+	// special values
+	static const AxisAlignedBox BOX_NULL;
+	static const AxisAlignedBox BOX_INFINITE;
+
+
+};
+
+/** Defines a plane in 3D space.
+
+	A plane is defined in 3D space by the equation
+	Ax + By + Cz + D = 0
+@par
+	This equates to a vector (the normal of the plane, whose x, y
+	and z components equate to the coefficients A, B and C
+	respectively), and a constant (D) which is the distance along
+	the normal you have to go to move the plane back to the origin.
+*/
+class OGREMATHLIB_EXPORT Plane
+{
+public:
+	Vector3 normal;
+	Real d;
+
+public:
+	/** Default constructor - sets everything to 0.
+	*/
+	Plane() : normal(Vector3::ZERO), d(0.0f) {}
+	/** Construct a plane through a normal, and a distance to move the plane along the normal.*/
+	Plane(const Vector3& rkNormal, Real fConstant)
+	{
+		normal = rkNormal;
+		d = -fConstant;
+	}
+	/** Construct a plane using the 4 constants directly **/
+	Plane(Real a, Real b, Real c, Real _d) : normal(a, b, c), d(_d) {}
+	Plane(const Vector3& rkNormal, const Vector3& rkPoint)
+	{
+		redefine(rkNormal, rkPoint);
+	}
+	Plane(const Vector3& p0, const Vector3& p1, const Vector3& p2)
+	{
+		redefine(p0, p1, p2);
+	}
+
+	/** The "positive side" of the plane is the half space to which the
+		plane normal points. The "negative side" is the other half
+		space. The flag "no side" indicates the plane itself.
+	*/
+	enum Side
+	{
+		NO_SIDE,
+		POSITIVE_SIDE,
+		NEGATIVE_SIDE,
+		BOTH_SIDE
+	};
+
+	Side getSide(const Vector3& rkPoint) const
+	{
+		Real fDistance = getDistance(rkPoint);
+
+		if (fDistance < 0.0)
+			return Plane::NEGATIVE_SIDE;
+
+		if (fDistance > 0.0)
+			return Plane::POSITIVE_SIDE;
+
+		return Plane::NO_SIDE;
+	}
+
+	/**
+	Returns the side where the alignedBox is. The flag BOTH_SIDE indicates an intersecting box.
+	One corner ON the plane is sufficient to consider the box and the plane intersecting.
+	*/
+	Side getSide(const AxisAlignedBox& box) const
+	{
+		if (box.isNull())
+			return NO_SIDE;
+		if (box.isInfinite())
+			return BOTH_SIDE;
+
+		return getSide(box.getCenter(), box.getHalfSize());
+	}
+
+	/** Returns which side of the plane that the given box lies on.
+		The box is defined as centre/half-size pairs for effectively.
+	@param centre The centre of the box.
+	@param halfSize The half-size of the box.
+	@return
+		POSITIVE_SIDE if the box complete lies on the "positive side" of the plane,
+		NEGATIVE_SIDE if the box complete lies on the "negative side" of the plane,
+		and BOTH_SIDE if the box intersects the plane.
+	*/
+	Side getSide(const Vector3& centre, const Vector3& halfSize) const
+	{
+		// Calculate the distance between box centre and the plane
+		Real dist = getDistance(centre);
+
+		// Calculate the maximise allows absolute distance for
+		// the distance between box centre and plane
+		Real maxAbsDist = normal.absDotProduct(halfSize);
+
+		if (dist < -maxAbsDist)
+			return NEGATIVE_SIDE;
+
+		if (dist > +maxAbsDist)
+			return POSITIVE_SIDE;
+
+		return BOTH_SIDE;
+	}
+
+	/** This is a pseudodistance. The sign of the return value is
+		positive if the point is on the positive side of the plane,
+		negative if the point is on the negative side, and zero if the
+		point is on the plane.
+		@par
+		The absolute value of the return value is the true distance only
+		when the plane normal is a unit length vector.
+	*/
+	Real getDistance(const Vector3& rkPoint) const
+	{
+		return normal.dotProduct(rkPoint) + d;
+	}
+
+	/** Redefine this plane based on 3 points. */
+	void redefine(const Vector3& p0, const Vector3& p1, const Vector3& p2)
+	{
+		normal = Math::calculateBasicFaceNormal(p0, p1, p2);
+		d = -normal.dotProduct(p0);
+	}
+
+	/** Redefine this plane based on a normal and a point. */
+	void redefine(const Vector3& rkNormal, const Vector3& rkPoint)
+	{
+		normal = rkNormal;
+		d = -rkNormal.dotProduct(rkPoint);
+	}
+
+	/** Project a vector onto the plane.
+	@remarks This gives you the element of the input vector that is perpendicular
+		to the normal of the plane. You can get the element which is parallel
+		to the normal of the plane by subtracting the result of this method
+		from the original vector, since parallel + perpendicular = original.
+	@param v The input vector
+	*/
+	Vector3 projectVector(const Vector3& v) const
+	{
+		// We know plane normal is unit length, so use simple method
+		Matrix3 xform;
+		xform[0][0] = 1.0f - normal.x * normal.x;
+		xform[0][1] = -normal.x * normal.y;
+		xform[0][2] = -normal.x * normal.z;
+		xform[1][0] = -normal.y * normal.x;
+		xform[1][1] = 1.0f - normal.y * normal.y;
+		xform[1][2] = -normal.y * normal.z;
+		xform[2][0] = -normal.z * normal.x;
+		xform[2][1] = -normal.z * normal.y;
+		xform[2][2] = 1.0f - normal.z * normal.z;
+		return xform * v;
+	}
+
+	/** Normalises the plane.
+
+			This method normalises the plane's normal and the length scale of d
+			is as well.
+		@note
+			This function will not crash for zero-sized vectors, but there
+			will be no changes made to their components.
+		@return The previous length of the plane's normal.
+	*/
+	Real normalise(void)
+	{
+		Real fLength = normal.length();
+
+		// Will also work for zero-sized vectors, but will change nothing
+		// We're not using epsilons because we don't need to.
+		// Read http://www.ogre3d.org/forums/viewtopic.php?f=4&t=61259
+		if (fLength > Real(0.0f))
+		{
+			Real fInvLength = 1.0f / fLength;
+			normal *= fInvLength;
+			d *= fInvLength;
+		}
+
+		return fLength;
+	}
+
+	/// Get flipped plane, with same location but reverted orientation
+	Plane operator - () const
+	{
+		return Plane(-(normal.x), -(normal.y), -(normal.z), -d); // not equal to Plane(-normal, -d)
+	}
+
+	/// Comparison operator
+	bool operator==(const Plane& rhs) const
+	{
+		return (rhs.d == d && rhs.normal == normal);
+	}
+	bool operator!=(const Plane& rhs) const
+	{
+		return (rhs.d != d || rhs.normal != normal);
+	}
+
+	friend std::ostream& operator<<(std::ostream& o, const Plane& p)
+	{
+		o << "Plane(normal=" << p.normal << ", d=" << p.d << ")";
+		return o;
+	}
+};
+
+/** A sphere primitive, mostly used for bounds checking.
+
+	A sphere in math texts is normally represented by the function
+	x^2 + y^2 + z^2 = r^2 (for sphere's centered on the origin). Ogre stores spheres
+	simply as a center point and a radius.
+*/
+class OGREMATHLIB_EXPORT Sphere
+{
+private:
+	Real mRadius;
+	Vector3 mCenter;
+public:
+	/** Standard constructor - creates a unit sphere around the origin.*/
+	Sphere() : mRadius(1.0), mCenter(Vector3::ZERO) {}
+	/** Constructor allowing arbitrary spheres.
+		@param center The center point of the sphere.
+		@param radius The radius of the sphere.
+	*/
+	Sphere(const Vector3& center, Real radius)
+		: mRadius(radius), mCenter(center) {}
+
+	/** Returns the radius of the sphere. */
+	Real getRadius(void) const { return mRadius; }
+
+	/** Sets the radius of the sphere. */
+	void setRadius(Real radius) { mRadius = radius; }
+
+	/** Returns the center point of the sphere. */
+	const Vector3& getCenter(void) const { return mCenter; }
+
+	/** Sets the center point of the sphere. */
+	void setCenter(const Vector3& center) { mCenter = center; }
+
+	/** Returns whether or not this sphere intersects another sphere. */
+	bool intersects(const Sphere& s) const
+	{
+		return (s.mCenter - mCenter).squaredLength() <=
+			Math::Sqr(s.mRadius + mRadius);
+	}
+	/** Returns whether or not this sphere intersects a box. */
+	bool intersects(const AxisAlignedBox& box) const
+	{
+		return Math::intersects(*this, box);
+	}
+	/** Returns whether or not this sphere intersects a plane. */
+	bool intersects(const Plane& plane) const
+	{
+		return Math::Abs(plane.getDistance(getCenter())) <= getRadius();
+	}
+	/** Returns whether or not this sphere intersects a point. */
+	bool intersects(const Vector3& v) const
+	{
+		return ((v - mCenter).squaredLength() <= Math::Sqr(mRadius));
+	}
+	/** Merges another Sphere into the current sphere */
+	void merge(const Sphere& oth)
+	{
+		Vector3 diff = oth.getCenter() - mCenter;
+		Real lengthSq = diff.squaredLength();
+		Real radiusDiff = oth.getRadius() - mRadius;
+
+		// Early-out
+		if (Math::Sqr(radiusDiff) >= lengthSq)
+		{
+			// One fully contains the other
+			if (radiusDiff <= 0.0f)
+				return; // no change
+			else
+			{
+				mCenter = oth.getCenter();
+				mRadius = oth.getRadius();
+				return;
+			}
+		}
+
+		Real length = Math::Sqrt(lengthSq);
+		Real t = (length + radiusDiff) / (2.0f * length);
+		mCenter = mCenter + diff * t;
+		mRadius = 0.5f * (length + mRadius + oth.getRadius());
+	}
+};
+
+/** Representation of a ray in space, i.e. a line with an origin and direction. */
+class OGREMATHLIB_EXPORT Ray
+{
+private:
+	Vector3 mOrigin;
+	Vector3 mDirection;
+public:
+	Ray() :mOrigin(Vector3::ZERO), mDirection(Vector3::UNIT_Z) {}
+	Ray(const Vector3& origin, const Vector3& direction)
+		:mOrigin(origin), mDirection(direction) {}
+
+	/** Sets the origin of the ray. */
+	void setOrigin(const Vector3& origin) { mOrigin = origin; }
+	/** Gets the origin of the ray. */
+	const Vector3& getOrigin(void) const { return mOrigin; }
+
+	/** Sets the direction of the ray. */
+	void setDirection(const Vector3& dir) { mDirection = dir; }
+	/** Gets the direction of the ray. */
+	const Vector3& getDirection(void) const { return mDirection; }
+
+	/** Gets the position of a point t units along the ray. */
+	Vector3 getPoint(Real t) const {
+		return Vector3(mOrigin + (mDirection * t));
+	}
+
+	/** Gets the position of a point t units along the ray. */
+	Vector3 operator*(Real t) const {
+		return getPoint(t);
+	}
+
+	/** Tests whether this ray intersects the given plane. */
+	RayTestResult intersects(const Plane& p) const
+	{
+		Real denom = p.normal.dotProduct(mDirection);
+		if (Math::Abs(denom) < std::numeric_limits<Real>::epsilon())
+		{
+			// Parallel
+			return RayTestResult(false, (Real)0);
+		}
+		else
+		{
+			Real nom = p.normal.dotProduct(mOrigin) + p.d;
+			Real t = -(nom / denom);
+			return RayTestResult(t >= 0, (Real)t);
+		}
+	}
+
+	/** Tests whether this ray intersects the given sphere. */
+	RayTestResult intersects(const Sphere& s, bool discardInside = true) const
+	{
+		// Adjust ray origin relative to sphere center
+		Vector3 rayorig = mOrigin - s.getCenter();
+		Real radius = s.getRadius();
+
+		// Check origin inside first
+		if (rayorig.squaredLength() <= radius * radius && discardInside)
+		{
+			return RayTestResult(true, (Real)0);
+		}
+
+		// Mmm, quadratics
+		// Build coeffs which can be used with std quadratic solver
+		// ie t = (-b +/- sqrt(b*b + 4ac)) / 2a
+		Real a = mDirection.dotProduct(mDirection);
+		Real b = 2 * rayorig.dotProduct(mDirection);
+		Real c = rayorig.dotProduct(rayorig) - radius * radius;
+
+		// Calc determinant
+		Real d = (b*b) - (4 * a * c);
+		if (d < 0)
+		{
+			// No intersection
+			return RayTestResult(false, (Real)0);
+		}
+		else
+		{
+			// BTW, if d=0 there is one intersection, if d > 0 there are 2
+			// But we only want the closest one, so that's ok, just use the
+			// '-' version of the solver
+			Real t = (-b - Math::Sqrt(d)) / (2 * a);
+			if (t < 0)
+				t = (-b + Math::Sqrt(d)) / (2 * a);
+			return RayTestResult(true, t);
+		}
+	}
+	/** Tests whether this ray intersects the given box. */
+	RayTestResult intersects(const AxisAlignedBox& box) const
+	{
+		return Math::intersects(*this, box);
+	}
+
+};
+
+inline RayTestResult Math::intersects(const Ray& ray, const Plane& plane)
+{
+	return ray.intersects(plane);
+}
+
+inline RayTestResult Math::intersects(const Ray& ray, const Sphere& sphere, bool discardInside)
+{
+	return ray.intersects(sphere, discardInside);
+}
+
+inline bool Math::intersects(const Sphere& sphere, const Plane& plane)
+{
+	return sphere.intersects(plane);
+}
+
+inline bool Math::intersects(const Plane& plane, const AxisAlignedBox& box)
+{
+	return plane.getSide(box) == Plane::BOTH_SIDE;
+}
+
+inline Vector3 Math::calculateBasicFaceNormal(const Vector3& v1, const Vector3& v2, const Vector3& v3)
+{
+	Vector3 normal = (v2 - v1).crossProduct(v3 - v1);
+	normal.normalise();
+	return normal;
+}
 } // namespace OgreMathLib
 
 #endif
